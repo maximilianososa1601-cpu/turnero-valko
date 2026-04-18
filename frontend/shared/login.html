@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Iniciar sesión — Turnero</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@700;800&family=IBM+Plex+Mono:wght@500&display=swap');
+    :root{--bg:#080C12;--s:#0E1117;--b:#252D3D;--t:#D4D8E1;--m:#6B7590;--a:#C8A96E;--r:#C0675A;--g:#6BAF82;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;display:flex;align-items:center;justify-content:center;}
+    .card{background:var(--s);border:1px solid var(--b);border-top:3px solid var(--a);padding:40px 34px;width:100%;max-width:400px;}
+    .title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--a);text-align:center;margin-bottom:4px;}
+    .sub{font-size:11px;color:var(--m);text-align:center;margin-bottom:24px;}
+    .org-badge{display:block;text-align:center;padding:4px 12px;background:rgba(200,169,110,.08);border:1px solid rgba(200,169,110,.25);color:var(--a);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:20px;}
+    .lbl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--m);margin-bottom:5px;}
+    input{width:100%;padding:11px 13px;background:var(--bg);border:1px solid var(--b);color:var(--t);font-family:'Barlow',sans-serif;font-size:14px;outline:none;transition:border-color .15s;margin-bottom:14px;}
+    input:focus{border-color:var(--a);}
+    .btn{width:100%;padding:13px;background:var(--a);border:none;color:#080C12;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;}
+    .btn:hover{opacity:.85;} .btn:disabled{opacity:.5;cursor:not-allowed;}
+    .err{padding:10px;background:rgba(192,103,90,.08);border:1px solid rgba(192,103,90,.3);color:var(--r);font-size:12px;font-weight:600;margin-bottom:14px;display:none;}
+    .sep{height:1px;background:var(--b);margin:20px 0;}
+    .demo-ttl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--m);margin-bottom:8px;}
+    .demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px;}
+    .d-btn{padding:8px 6px;background:var(--bg);border:1px solid var(--b);color:var(--m);font-size:10px;font-weight:600;cursor:pointer;text-align:center;transition:all .15s;}
+    .d-btn:hover{border-color:var(--b);color:var(--t);}
+    .d-btn strong{display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--a);margin-bottom:1px;}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="title">Sistema de Turnos</div>
+  <div class="sub">Iniciá sesión para continuar</div>
+  <div id="org-badge" class="org-badge" style="display:none"></div>
+  <div class="err" id="err"></div>
+  <div class="lbl">Usuario</div>
+  <input id="usr" type="text" placeholder="usuario" autocomplete="username">
+  <div class="lbl">Contraseña</div>
+  <input id="pwd" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+  <button class="btn" id="btn" onclick="doLogin()">Ingresar</button>
+
+  <div class="sep"></div>
+  <div class="demo-ttl">Banco Demo · banco-demo</div>
+  <div class="demo-grid">
+    <div class="d-btn" onclick="q('admin','admin123','banco-demo')"><strong>admin</strong>Administrador</div>
+    <div class="d-btn" onclick="q('operario1','admin123','banco-demo')"><strong>operario1</strong>Operador</div>
+    <div class="d-btn" onclick="q('pantalla1','admin123','banco-demo')"><strong>pantalla1</strong>Pantalla TV</div>
+    <div class="d-btn" onclick="q('totem1','admin123','banco-demo')"><strong>totem1</strong>Tótem</div>
+  </div>
+  <div class="demo-ttl">Hospital Demo · hospital-demo</div>
+  <div class="demo-grid">
+    <div class="d-btn" onclick="q('admin.hospital','admin123','hospital-demo')"><strong>admin.hospital</strong>Admin</div>
+    <div class="d-btn" onclick="q('dr.rodriguez','admin123','hospital-demo')"><strong>dr.rodriguez</strong>Operador</div>
+  </div>
+  <div class="demo-ttl">Global</div>
+  <div class="demo-grid" style="grid-template-columns:1fr">
+    <div class="d-btn" onclick="q('superadmin','superadmin123',null)"><strong>superadmin</strong>Super Administrador</div>
+  </div>
+</div>
+<script src="/shared/turnero-client.js"></script>
+<script>
+  if (Auth.isLoggedIn()) redir(Auth.user);
+  const orgSlug = new URLSearchParams(location.search).get('org');
+  let currentOrg = orgSlug || null;
+  if (orgSlug) { const b=document.getElementById('org-badge'); b.textContent=orgSlug; b.style.display='block'; }
+
+  async function doLogin() {
+    const u=document.getElementById('usr').value.trim(), p=document.getElementById('pwd').value;
+    if (!u||!p) return showErr('Ingresá usuario y contraseña');
+    const btn=document.getElementById('btn'); btn.disabled=true; btn.textContent='Ingresando...';
+    hideErr();
+    try { const d=await login(u,p,currentOrg); redir(d.user); }
+    catch(e) { showErr(e.message); btn.disabled=false; btn.textContent='Ingresar'; }
+  }
+  async function q(u,p,org) {
+    currentOrg=org;
+    if(org){const b=document.getElementById('org-badge');b.textContent=org;b.style.display='block';}
+    document.getElementById('usr').value=u; document.getElementById('pwd').value=p;
+    const btn=document.getElementById('btn'); btn.disabled=true; btn.textContent='Ingresando...'; hideErr();
+    try { const d=await login(u,p,org); redir(d.user); }
+    catch(e) { showErr(e.message); btn.disabled=false; btn.textContent='Ingresar'; }
+  }
+  function redir(user) {
+    const map={superadmin:'/superadmin/',admin:'/admin/',supervisor:'/admin/',operador:'/operador/',pantalla:'/pantalla/',totem:'/totem/'};
+    location.href=map[user.rol]||'/';
+  }
+  function showErr(m){const e=document.getElementById('err');e.textContent=m;e.style.display='block';}
+  function hideErr(){document.getElementById('err').style.display='none';}
+</script>
+</body>
+</html>

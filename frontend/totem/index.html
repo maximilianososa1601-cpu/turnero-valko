@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tótem — Turnos</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@700;800;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap');
+    :root{--bg:#0E1117;--s:#161B25;--b:#252D3D;--t:#D4D8E1;--m:#6B7590;--a:#C8A96E;--r:#C0675A;--g:#6BAF82;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;user-select:none;}
+    body::before{content:'';position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(200,169,110,.03)1px,transparent 1px),linear-gradient(90deg,rgba(200,169,110,.03)1px,transparent 1px);background-size:52px 52px;}
+
+    header{display:flex;align-items:center;padding:0 32px;height:66px;background:var(--s);border-bottom:1px solid var(--b);position:relative;z-index:1;}
+    .h-logo{max-height:38px;max-width:140px;object-fit:contain;display:none;}
+    .h-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--a);}
+    .h-sub{font-size:11px;color:var(--m);margin-top:2px;}
+    .h-clk{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:var(--a);}
+
+    main{display:flex;flex-direction:column;align-items:center;padding:40px 24px;min-height:calc(100vh - 66px);}
+    .greeting{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t);margin-bottom:10px;text-align:center;}
+    .inst{font-size:14px;color:var(--m);margin-bottom:36px;text-align:center;}
+
+    /* Sucursal selector */
+    .suc-select{margin-bottom:32px;text-align:center;}
+    .suc-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--m);margin-bottom:8px;}
+    .suc-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+    .suc-btn{padding:8px 20px;background:var(--s);border:1px solid var(--b);color:var(--m);font-size:12px;font-weight:600;letter-spacing:.06em;cursor:pointer;text-transform:uppercase;transition:all .15s;}
+    .suc-btn:hover,.suc-btn.sel{border-color:var(--a);color:var(--a);background:rgba(200,169,110,.05);}
+
+    /* Areas grid */
+    .areas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;width:100%;max-width:880px;}
+    .area-btn{padding:28px 18px;background:var(--s);border:1px solid var(--b);border-top:3px solid var(--ac);cursor:pointer;transition:transform .12s,border-color .15s;text-align:center;position:relative;}
+    .area-btn:hover{transform:translateY(-2px);border-color:var(--ac);}
+    .area-btn:active{transform:translateY(0);}
+    .ab-prefix{font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:900;color:var(--ac);line-height:1;margin-bottom:6px;}
+    .ab-name{font-size:15px;font-weight:700;margin-bottom:10px;}
+    .ab-queue{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--m);}
+    .ab-queue span{font-family:'IBM Plex Mono',monospace;color:var(--t);margin-left:4px;}
+
+    /* Priority modal */
+    .prio-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:150;}
+    .prio-overlay.show{display:flex;}
+    .prio-card{background:var(--s);border:1px solid var(--b);border-top:3px solid var(--a);padding:32px;width:90%;max-width:380px;}
+    .prio-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--a);margin-bottom:20px;}
+    .prio-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+    .prio-btn{padding:18px 12px;background:var(--bg);border:2px solid var(--b);cursor:pointer;text-align:center;transition:all .15s;}
+    .prio-btn:hover,.prio-btn.sel{border-color:var(--pc);}
+    .prio-icon{font-size:28px;margin-bottom:6px;}
+    .prio-label{font-size:11px;font-weight:700;color:var(--t);}
+    .prio-desc{font-size:9px;color:var(--m);margin-top:2px;}
+    .btn-emit{width:100%;padding:14px;background:var(--a);border:none;color:#0E1117;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-bottom:8px;}
+    .btn-cancel-p{width:100%;padding:9px;background:transparent;border:1px solid var(--b);color:var(--m);font-size:11px;cursor:pointer;}
+
+    /* Ticket overlay */
+    .ticket-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:100;flex-direction:column;}
+    .ticket-overlay.show{display:flex;}
+    .ticket-card{background:var(--s);border:1px solid var(--b);border-top:3px solid var(--a);padding:40px 48px;text-align:center;max-width:400px;width:90%;}
+    .tk-check{font-size:38px;margin-bottom:16px;}
+    .tk-area{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--m);margin-bottom:8px;}
+    .tk-num{font-family:'IBM Plex Mono',monospace;font-size:80px;font-weight:700;color:var(--a);line-height:1;margin-bottom:8px;}
+    .tk-msg{font-size:12px;color:var(--m);margin-bottom:20px;}
+    .tk-wait{font-size:13px;font-weight:600;color:var(--t);margin-bottom:24px;}
+    .tk-countdown{font-size:11px;color:var(--m);}
+    .tk-countdown span{font-family:'IBM Plex Mono',monospace;color:var(--a);}
+    .btn-reprint{padding:10px 28px;background:transparent;border:1px solid var(--b);color:var(--m);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-top:12px;transition:all .15s;}
+    .btn-reprint:hover{border-color:var(--a);color:var(--a);}
+    .btn-manual-close{margin-top:8px;padding:8px 20px;background:transparent;border:none;color:var(--m);font-size:11px;cursor:pointer;text-decoration:underline;}
+
+    @media print{
+      body > *:not(#print-area){display:none !important;}
+      #print-area{display:block !important;}
+      @page{size:80mm auto;margin:0;}
+    }
+    #print-area{display:none;}
+
+    #ws-dot{position:fixed;bottom:10px;right:10px;width:7px;height:7px;border-radius:50%;background:var(--r);}
+    #ws-dot.ok{background:var(--g);}
+  </style>
+</head>
+<body>
+<header>
+  <img class="h-logo" id="h-logo" src="" alt="logo">
+  <div>
+    <div class="h-title" id="h-org">Sistema de Turnos</div>
+    <div class="h-sub" id="h-suc">Cargando...</div>
+  </div>
+  <div class="h-clk" id="reloj"></div>
+</header>
+
+<main>
+  <div class="greeting">Bienvenido</div>
+  <div class="inst">Seleccione el servicio que necesita</div>
+
+  <div class="suc-select" id="suc-select" style="display:none">
+    <div class="suc-label">Seleccione sucursal</div>
+    <div class="suc-grid" id="suc-grid"></div>
+  </div>
+
+  <div class="areas-grid" id="areas-grid"></div>
+</main>
+
+<!-- Priority overlay -->
+<div class="prio-overlay" id="prio-overlay">
+  <div class="prio-card">
+    <div class="prio-title">¿Necesitás prioridad?</div>
+    <div class="prio-grid">
+      <div class="prio-btn" style="--pc:#C8A96E" onclick="setPrio(0)">
+        <div class="prio-icon">🧑</div>
+        <div class="prio-label">Normal</div>
+        <div class="prio-desc">Turno estándar</div>
+      </div>
+      <div class="prio-btn" style="--pc:#9B7FD4" onclick="setPrio(1,'embarazada')">
+        <div class="prio-icon">🤰</div>
+        <div class="prio-label">Embarazada</div>
+        <div class="prio-desc">Atención preferencial</div>
+      </div>
+      <div class="prio-btn" style="--pc:#7E9EB5" onclick="setPrio(1,'adulto_mayor')">
+        <div class="prio-icon">👴</div>
+        <div class="prio-label">Adulto mayor</div>
+        <div class="prio-desc">+65 años</div>
+      </div>
+      <div class="prio-btn" style="--pc:#6BAF82" onclick="setPrio(1,'discapacidad')">
+        <div class="prio-icon">♿</div>
+        <div class="prio-label">Discapacidad</div>
+        <div class="prio-desc">Movilidad reducida</div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-bottom:6px;">¿Querés recibir aviso por WhatsApp?</div>
+      <input id="prio-tel" placeholder="+54911XXXXXXXX (opcional)" style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--b);color:var(--t);font-size:13px;outline:none;">
+    </div>
+    <button class="btn-emit" onclick="confirmarEmision()">Tomar turno →</button>
+    <button class="btn-cancel-p" onclick="cerrarPrio()">Cancelar</button>
+  </div>
+</div>
+
+<!-- Ticket overlay -->
+<div class="ticket-overlay" id="ticket-overlay">
+  <div class="ticket-card">
+    <div class="tk-check">🎫</div>
+    <div class="tk-area" id="tk-area"></div>
+    <div class="tk-num" id="tk-num"></div>
+    <div class="tk-msg">Su turno fue registrado</div>
+    <div class="tk-wait" id="tk-wait"></div>
+    <div class="tk-countdown">Volviendo en <span id="tk-cdown">10</span>s</div>
+    <div style="margin-top:18px;display:flex;gap:10px;justify-content:center;">
+      <button class="btn-reprint" onclick="reprintTicket()">🖨 Reimprimir</button>
+      <button class="btn-manual-close" onclick="closeTicket()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="print-area"></div>
+<div id="ws-dot"></div>
+
+<script src="/shared/turnero-client.js"></script>
+<script>
+  const user = requireLogin(['totem','admin']);
+  if (!user) throw '';
+
+  liveClock(document.getElementById('reloj'));
+  document.getElementById('h-org').textContent = user.org_nombre || 'Sistema de Turnos';
+
+  const orgId  = user.org_id;
+  const orgSlug= user.org_slug;
+  let currentSucId = user.suc_id || null;
+  let lastTicket   = null;
+  let countdownTimer = null;
+  let areas = [];
+
+  // ── Sucursales ───────────────────────────────────────────────
+  async function initSucursales() {
+    const sucursales = user.sucursales || [];
+    if (sucursales.length > 1 && !currentSucId) {
+      const sg = document.getElementById('suc-grid');
+      sg.innerHTML = sucursales.map(s=>`
+        <button class="suc-btn" onclick="selectSuc(${s.id},'${s.nombre}')">${s.nombre}</button>`).join('');
+      document.getElementById('suc-select').style.display = 'block';
+    } else {
+      if (sucursales.length === 1) currentSucId = sucursales[0].id;
+      loadAreas();
+    }
+  }
+
+  function selectSuc(id, nombre) {
+    currentSucId = id;
+    document.querySelectorAll('.suc-btn').forEach(b=>b.classList.toggle('sel', parseInt(b.onclick.toString().match(/\d+/)[0])===id));
+    document.getElementById('h-suc').textContent = nombre;
+    loadAreas();
+  }
+
+  // ── Cargar áreas ─────────────────────────────────────────────
+  async function loadAreas() {
+    if (!currentSucId) return;
+    try {
+      const data = await apiGet(`/orgs/areas/list?suc_id=${currentSucId}`);
+      areas = data.filter(a=>a.activo);
+      // Cargar estado (conteos en espera)
+      const estado = await apiGet(`/turnos/estado?suc_id=${currentSucId}`);
+      const countMap = {};
+      (estado.esperando||[]).forEach(t => { countMap[t.area_id] = (countMap[t.area_id]||0)+1; });
+
+      document.getElementById('areas-grid').innerHTML = areas.map(a=>`
+        <div class="area-btn" style="--ac:${a.color}" onclick="emitirTurno(${a.id})">
+          <div class="ab-prefix">${a.prefijo}</div>
+          <div class="ab-name">${a.nombre}</div>
+          <div class="ab-queue">En espera <span>${countMap[a.id]||0}</span></div>
+        </div>`).join('');
+    } catch(e) { console.error(e); }
+  }
+
+  let pendingAreaId = null;
+  let pendingPrio = 0;
+  let pendingMotivo = null;
+
+  // ── Emitir turno ─────────────────────────────────────────────
+  function emitirTurno(areaId) {
+    pendingAreaId = areaId; pendingPrio = 0; pendingMotivo = null;
+    document.getElementById('prio-overlay').classList.add('show');
+    document.querySelectorAll('.prio-btn').forEach(b=>b.classList.remove('sel'));
+    document.querySelector('.prio-btn').classList.add('sel'); // default: normal
+    document.getElementById('prio-tel').value = '';
+    return;
+  }
+  function setPrio(p, motivo=null) {
+    pendingPrio = p; pendingMotivo = motivo;
+    document.querySelectorAll('.prio-btn').forEach(b=>b.classList.remove('sel'));
+    event.currentTarget.classList.add('sel');
+  }
+  function cerrarPrio() { document.getElementById('prio-overlay').classList.remove('show'); }
+  async function confirmarEmision() {
+    const areaId = pendingAreaId;
+    const area = areas.find(a=>a.id===areaId);
+    if (!area) return;
+    cerrarPrio();
+    try {
+      const tel = document.getElementById('prio-tel')?.value?.trim();
+      const turno = await apiPost('/turnos', {
+        area_id:          areaId,
+        suc_id:           currentSucId,
+        tipo:             area.nombre,
+        canal:            'totem',
+        prioridad:        pendingPrio,
+        motivo_prioridad: pendingMotivo,
+        cliente_tel:      tel || undefined,
+        canal_notif:      tel ? 'whatsapp' : 'ninguno',
+      });
+      lastTicket = { turno, area };
+      showTicket(turno, area);
+      printTicket(turno, area);
+    } catch(e) { alert('Error al emitir turno: ' + e.message); }
+  }
+
+  // ── Mostrar overlay ──────────────────────────────────────────
+  function showTicket(turno, area) {
+    document.getElementById('tk-area').textContent  = area.nombre;
+    document.getElementById('tk-num').textContent   = turno.numero;
+    const en_espera = parseInt(turno.numero.replace(/\D/g,'')) - 1;
+    document.getElementById('tk-wait').textContent  = en_espera > 0
+      ? `Hay ${en_espera} persona(s) antes que usted`
+      : 'Es el próximo en ser atendido';
+    document.getElementById('ticket-overlay').classList.add('show');
+    startCountdown(10);
+  }
+
+  function startCountdown(secs) {
+    clearInterval(countdownTimer);
+    let s = secs;
+    document.getElementById('tk-cdown').textContent = s;
+    countdownTimer = setInterval(()=>{
+      s--;
+      document.getElementById('tk-cdown').textContent = s;
+      if (s <= 0) { clearInterval(countdownTimer); closeTicket(); }
+    }, 1000);
+  }
+
+  function closeTicket() {
+    clearInterval(countdownTimer);
+    document.getElementById('ticket-overlay').classList.remove('show');
+    loadAreas();
+  }
+
+  function reprintTicket() {
+    if (!lastTicket) return;
+    printTicket(lastTicket.turno, lastTicket.area);
+    startCountdown(10);
+  }
+
+  // ── Imprimir ──────────────────────────────────────────────────
+  function printTicket(turno, area) {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    const dateStr = now.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const orgName = user.org_nombre || 'Sistema de Turnos';
+
+    document.getElementById('print-area').innerHTML = `
+      <div style="font-family:monospace;font-size:13px;width:72mm;padding:6mm 5mm;text-align:center;">
+        <div style="font-size:14px;font-weight:bold;margin-bottom:2px;">${orgName}</div>
+        <div style="font-size:9px;margin-bottom:8px;border-bottom:1px dashed #000;padding-bottom:6px;">TURNO</div>
+        <div style="font-size:11px;margin-bottom:4px;">${area.nombre}</div>
+        <div style="font-size:64px;font-weight:900;letter-spacing:.04em;line-height:1;margin:8px 0;">${turno.numero}</div>
+        <div style="font-size:9px;margin-bottom:2px;">Hora: ${timeStr}</div>
+        <div style="font-size:9px;margin-bottom:10px;">Fecha: ${dateStr}</div>
+        <div style="font-size:9px;border-top:1px dashed #000;padding-top:6px;">Gracias por su visita</div>
+      </div>`;
+    setTimeout(() => window.print(), 150);
+  }
+
+  // ── WebSocket ─────────────────────────────────────────────────
+  new TurneroWS({
+    view: 'totem', orgId, sucId: currentSucId,
+    handlers: {
+      onOpen:  ()=>document.getElementById('ws-dot').classList.add('ok'),
+      onClose: ()=>document.getElementById('ws-dot').classList.remove('ok'),
+      turno_emitido: ()=>loadAreas(),
+      turno_llamado: ()=>loadAreas(),
+      turno_actualizado: ()=>loadAreas(),
+    }
+  });
+
+  initSucursales();
+</script>
+</body>
+</html>

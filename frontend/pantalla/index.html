@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pantalla — Turnos</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700;800&family=Barlow+Condensed:wght@700;800;900&family=IBM+Plex+Mono:wght@600;700&display=swap');
+    :root{--bg:#080C12;--s:#0E1117;--s2:#161B25;--b:#1E2535;--b2:#252D3D;--t:#D4D8E1;--m:#6B7590;--a:#C8A96E;--g:#6BAF82;--r:#C0675A;--p:#9B7FD4;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+    body::before{content:'';position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(200,169,110,.025)1px,transparent 1px),linear-gradient(90deg,rgba(200,169,110,.025)1px,transparent 1px);background-size:62px 62px;z-index:0;}
+
+    /* Top bar */
+    .topbar{height:58px;background:var(--s);border-bottom:2px solid var(--a);display:flex;align-items:center;padding:0 28px;gap:18px;z-index:2;flex-shrink:0;}
+    .tb-logo{max-height:34px;max-width:120px;object-fit:contain;display:none;}
+    .tb-org{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:var(--a);}
+    .tb-suc{font-size:11px;color:var(--m);margin-top:1px;}
+    .tb-clk{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:700;color:var(--a);}
+    .tb-date{font-size:11px;color:var(--m);text-align:right;margin-top:1px;}
+
+    /* Main layout */
+    .content{flex:1;display:grid;grid-template-columns:1fr 280px;grid-template-rows:1fr;gap:0;position:relative;z-index:1;overflow:hidden;}
+
+    /* Left: main calling */
+    .main-panel{display:flex;flex-direction:column;padding:20px;gap:14px;overflow:hidden;}
+    .now-serving{flex:1;background:var(--s2);border:1px solid var(--b2);border-left:6px solid var(--ac,var(--a));display:flex;flex-direction:column;justify-content:center;align-items:center;padding:28px;min-height:0;}
+    .ns-label{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--m);margin-bottom:8px;}
+    .ns-num{font-family:'IBM Plex Mono',monospace;font-size:clamp(100px,18vw,180px);font-weight:700;color:var(--ac,var(--a));line-height:1;}
+    .ns-area{font-family:'Barlow Condensed',sans-serif;font-size:clamp(18px,3vw,32px);font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-top:6px;}
+    .ns-vent{font-size:clamp(12px,1.5vw,16px);color:var(--m);margin-top:4px;}
+    .ns-empty{font-size:16px;color:var(--m);text-align:center;}
+
+    /* Also serving */
+    .also-wrap{background:var(--s);border:1px solid var(--b2);padding:14px 18px;flex-shrink:0;}
+    .aw-ttl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--m);margin-bottom:10px;}
+    .also-grid{display:flex;flex-wrap:wrap;gap:6px;}
+    .also-item{padding:8px 16px;background:var(--s2);border:1px solid var(--b2);border-top:2px solid var(--ic,var(--a));display:flex;align-items:center;gap:10px;}
+    .ai-num{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:700;color:var(--ic,var(--a));}
+    .ai-info{font-size:11px;}
+    .ai-vent{font-size:9px;color:var(--m);}
+
+    /* Right: waiting queue */
+    .queue-panel{background:var(--s);border-left:1px solid var(--b2);display:flex;flex-direction:column;overflow:hidden;}
+    .qp-hd{padding:14px 16px;border-bottom:1px solid var(--b2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .qp-ttl{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--m);}
+    .qp-count{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--a);}
+    .q-list{flex:1;overflow-y:hidden;padding:8px 8px;}
+    .q-row{display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:4px;background:var(--s2);border-left:3px solid var(--ac);}
+    .qr-num{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;color:var(--ac);}
+    .qr-info{flex:1;}
+    .qr-area{font-size:11px;font-weight:600;}
+    .qr-time{font-size:9px;color:var(--m);}
+    .qr-dvd{font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--p);}
+
+    /* Flash overlay */
+    .flash-overlay{position:fixed;inset:0;background:rgba(200,169,110,.08);border:4px solid var(--a);pointer-events:none;opacity:0;transition:opacity .3s;z-index:50;}
+    .flash-overlay.active{opacity:1;}
+
+    /* Ticker */
+    .ticker{height:36px;background:rgba(200,169,110,.06);border-top:1px solid rgba(200,169,110,.2);display:flex;align-items:center;overflow:hidden;flex-shrink:0;z-index:2;position:relative;}
+    .ticker-label{padding:0 16px;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--a);white-space:nowrap;border-right:1px solid rgba(200,169,110,.2);height:100%;display:flex;align-items:center;}
+    .ticker-track{display:flex;align-items:center;height:100%;overflow:hidden;flex:1;position:relative;}
+    .ticker-content{display:flex;gap:60px;animation:ticker 30s linear infinite;white-space:nowrap;}
+    @keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+    .tk-item{font-size:12px;font-weight:600;color:var(--t);}
+    .tk-sep{color:var(--a);margin:0 8px;}
+
+    #ws-dot{position:fixed;bottom:8px;right:8px;width:7px;height:7px;border-radius:50%;background:var(--r);z-index:100;}
+    #ws-dot.ok{background:var(--g);}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <img class="tb-logo" id="tb-logo" src="" alt="">
+  <div>
+    <div class="tb-org" id="tb-org">Sistema de Turnos</div>
+    <div class="tb-suc" id="tb-suc"></div>
+  </div>
+  <div style="margin-left:auto;text-align:right">
+    <div class="tb-clk" id="reloj"></div>
+    <div class="tb-date" id="fecha"></div>
+  </div>
+</div>
+
+<div class="content">
+  <!-- Main calling -->
+  <div class="main-panel">
+    <div class="now-serving" id="now-serving">
+      <div class="ns-label">Turno en atención</div>
+      <div class="ns-num" id="ns-num">—</div>
+      <div class="ns-area" id="ns-area">Esperando...</div>
+      <div class="ns-vent" id="ns-vent"></div>
+    </div>
+    <div class="also-wrap">
+      <div class="aw-ttl">También en atención</div>
+      <div class="also-grid" id="also-grid"></div>
+    </div>
+  </div>
+
+  <!-- Queue -->
+  <div class="queue-panel">
+    <div class="qp-hd">
+      <div class="qp-ttl">En espera</div>
+      <div class="qp-count" id="qp-count">0</div>
+    </div>
+    <div class="q-list" id="q-list"></div>
+  </div>
+</div>
+
+<div class="ticker">
+  <div class="ticker-label">Atención</div>
+  <div class="ticker-track">
+    <div class="ticker-content" id="ticker-content">
+      <span class="tk-item">Bienvenido</span>
+    </div>
+  </div>
+</div>
+
+<div class="flash-overlay" id="flash-overlay"></div>
+<div id="ws-dot"></div>
+
+<script src="/shared/turnero-client.js"></script>
+<script>
+  const user = requireLogin(['pantalla','admin']);
+  if (!user) throw '';
+
+  const orgId = user.org_id;
+  let sucursalId = user.suc_id || user.sucursales?.[0]?.id;
+  let lastCalled = null;
+
+  document.getElementById('tb-org').textContent  = user.org_nombre || 'Sistema de Turnos';
+  const dateStr = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('fecha').textContent = dateStr;
+  liveClock(document.getElementById('reloj'));
+
+  if (user.sucursales?.length > 1 && !sucursalId) {
+    // Simple prompt para seleccionar sucursal si hay varias y no está asignado
+    const opts = user.sucursales.map(s=>`${s.id}: ${s.nombre}`).join('\n');
+    const chosen = prompt('Seleccione sucursal (ingrese el número):\n'+opts);
+    sucursalId = parseInt(chosen) || user.sucursales[0].id;
+  }
+  if (user.sucursales?.length) {
+    const suc = user.sucursales.find(s=>s.id===sucursalId) || user.sucursales[0];
+    document.getElementById('tb-suc').textContent = suc?.nombre || '';
+    sucursalId = suc?.id;
+  }
+
+  // ── Render state ──────────────────────────────────────────────
+  async function loadEstado() {
+    if (!sucursalId) return;
+    try {
+      const data = await apiGet(`/turnos/estado?suc_id=${sucursalId}`);
+      renderActivos(data.activos || []);
+      renderEspera(data.esperando || []);
+      updateTicker(data.activos || [], data.stats || {});
+    } catch(e) {}
+  }
+
+  function renderActivos(activos) {
+    if (!activos.length) {
+      document.getElementById('now-serving').style.setProperty('--ac','var(--a)');
+      document.getElementById('ns-num').textContent  = '—';
+      document.getElementById('ns-num').style.color  = 'var(--a)';
+      document.getElementById('ns-area').textContent = 'Esperando llamado...';
+      document.getElementById('ns-vent').textContent = '';
+      document.getElementById('also-grid').innerHTML = '';
+      return;
+    }
+    const main = activos[0];
+    document.getElementById('now-serving').style.setProperty('--ac', main.area_color || 'var(--a)');
+    document.getElementById('ns-num').textContent  = main.numero;
+    document.getElementById('ns-num').style.color  = main.area_color || 'var(--a)';
+    document.getElementById('ns-area').textContent = main.area_nombre;
+    document.getElementById('ns-vent').textContent = main.ventanilla_nombre ? `→ ${main.ventanilla_nombre}` : '';
+
+    const others = activos.slice(1);
+    document.getElementById('also-grid').innerHTML = others.map(t=>`
+      <div class="also-item" style="--ic:${t.area_color||'var(--a)'}">
+        <div class="ai-num">${t.numero}</div>
+        <div><div class="ai-info">${t.area_nombre}</div><div class="ai-vent">${t.ventanilla_nombre||''}</div></div>
+      </div>`).join('') || '<div style="font-size:11px;color:var(--m)">—</div>';
+  }
+
+  function renderEspera(espera) {
+    document.getElementById('qp-count').textContent = espera.length;
+    const visible = espera.slice(0, 14);
+    document.getElementById('q-list').innerHTML = visible.map(t=>`
+      <div class="q-row" style="--ac:${t.area_color||'var(--a)'}">
+        <div class="qr-num">${t.numero}</div>
+        <div class="qr-info">
+          <div class="qr-area">${t.area_nombre}</div>
+          <div class="qr-time">${formatTime(t.hora_emision)}</div>
+        </div>
+        ${t.derivado_de_num?'<div class="qr-dvd">↗ Der.</div>':''}
+      </div>`).join('') || '<div style="padding:20px;text-align:center;font-size:11px;color:var(--m)">Sin turnos en espera</div>';
+  }
+
+  function updateTicker(activos, stats) {
+    const items = [
+      activos.length ? `Atendiendo: ${activos.map(t=>t.numero).join(' · ')}` : 'Sin turno activo',
+      stats.esperando != null ? `En espera: ${stats.esperando} turno${stats.esperando!==1?'s':''}` : '',
+      stats.atendido  != null ? `Atendidos hoy: ${stats.atendido}` : '',
+    ].filter(Boolean);
+    const html = [...items,...items].map(t=>`<span class="tk-item">${t}</span>`).join('<span class="tk-sep">·</span>');
+    document.getElementById('ticker-content').innerHTML = html;
+  }
+
+  // ── Flash on call ─────────────────────────────────────────────
+  function flashCall() {
+    const el = document.getElementById('flash-overlay');
+    el.classList.add('active');
+    setTimeout(()=>el.classList.remove('active'), 600);
+    setTimeout(()=>{ el.classList.add('active'); setTimeout(()=>el.classList.remove('active'),400); }, 800);
+  }
+
+  // ── WS ────────────────────────────────────────────────────────
+  new TurneroWS({
+    view: 'pantalla', orgId, sucId: sucursalId,
+    handlers: {
+      onOpen:  ()=>document.getElementById('ws-dot').classList.add('ok'),
+      onClose: ()=>document.getElementById('ws-dot').classList.remove('ok'),
+      turno_llamado:     (d)=>{ flashCall(); loadEstado(); },
+      turno_emitido:     ()=>loadEstado(),
+      turno_actualizado: ()=>loadEstado(),
+      turno_derivado:    ()=>loadEstado(),
+    }
+  });
+
+  loadEstado();
+  setInterval(loadEstado, 15000);
+</script>
+</body>
+</html>

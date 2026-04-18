@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Operador — Turnos</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap');
+    :root{--bg:#080C12;--s:#0E1117;--s2:#161B25;--b:#1E2535;--b2:#252D3D;--t:#D4D8E1;--m:#6B7590;--a:#C8A96E;--g:#6BAF82;--r:#C0675A;--p:#9B7FD4;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;display:flex;flex-direction:column;}
+
+    header{height:54px;background:var(--s);border-bottom:1px solid var(--b2);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0;}
+    .h-badge{padding:3px 9px;background:rgba(200,169,110,.12);border:1px solid rgba(200,169,110,.3);color:var(--a);font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
+    .h-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;}
+    .h-vent{font-size:11px;color:var(--m);margin-left:6px;}
+    .h-clk{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--a);}
+    .btn-logout{padding:5px 11px;background:transparent;border:1px solid var(--b2);color:var(--m);font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;transition:all .15s;margin-left:8px;}
+    .btn-logout:hover{border-color:var(--r);color:var(--r);}
+
+    .shell{flex:1;display:flex;overflow:hidden;}
+    .col-main{flex:1;display:flex;flex-direction:column;padding:20px;gap:14px;overflow-y:auto;}
+    .col-side{width:300px;background:var(--s);border-left:1px solid var(--b2);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
+
+    /* Setup screen */
+    #setup-screen{flex:1;display:flex;align-items:center;justify-content:center;}
+    .setup-box{background:var(--s);border:1px solid var(--b2);border-top:2px solid var(--a);padding:36px;width:100%;max-width:440px;}
+    .setup-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:20px;color:var(--a);}
+    .lbl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--m);margin-bottom:5px;}
+    select{width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--b2);color:var(--t);font-family:'Barlow',sans-serif;font-size:13px;outline:none;margin-bottom:14px;transition:border-color .15s;}
+    select:focus{border-color:var(--a);}
+    .btn-start{width:100%;padding:13px;background:var(--a);border:none;color:#080C12;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:opacity .15s;}
+    .btn-start:hover{opacity:.85;}
+
+    /* Turno en pantalla */
+    .tur-card{background:var(--s2);border:1px solid var(--b2);border-left:4px solid var(--ac,var(--a));padding:22px;}
+    .tur-tag{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--m);margin-bottom:6px;}
+    .tur-num{font-family:'IBM Plex Mono',monospace;font-size:68px;font-weight:700;color:var(--ac,var(--a));line-height:1;margin-bottom:4px;}
+    .tur-area{font-size:14px;font-weight:700;margin-bottom:12px;}
+    .tur-meta{display:flex;gap:16px;flex-wrap:wrap;}
+    .tur-meta-item{font-size:11px;color:var(--m);}
+    .tur-meta-item span{font-family:'IBM Plex Mono',monospace;color:var(--t);}
+    .drv-badge{display:inline-block;padding:2px 8px;background:rgba(155,127,212,.1);border:1px solid rgba(155,127,212,.3);color:var(--p);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:8px;}
+
+    /* Botones acción */
+    .action-row{display:flex;gap:8px;flex-wrap:wrap;}
+    .btn-action{flex:1;min-width:80px;padding:14px 10px;border:none;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+    .btn-action:hover{opacity:.85;}
+    .btn-call{background:var(--a);color:#080C12;}
+    .btn-done{background:var(--g);color:#080C12;}
+    .btn-absent{background:var(--s2);border:1px solid var(--b2);color:var(--m);}
+    .btn-derive{background:rgba(155,127,212,.15);border:1px solid rgba(155,127,212,.4);color:var(--p);}
+    .btn-attention{background:var(--s2);border:1px solid rgba(200,169,110,.3);color:var(--a);}
+
+    /* Derivación panel */
+    .derive-panel{background:var(--s);border:1px solid rgba(155,127,212,.3);border-left:3px solid var(--p);padding:16px;display:none;}
+    .derive-panel.show{display:block;}
+    .dp-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--p);margin-bottom:12px;}
+    .dp-areas{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;}
+    .dp-area{padding:10px 8px;background:var(--bg);border:1px solid var(--b2);cursor:pointer;text-align:center;transition:border-color .15s;border-top:2px solid var(--ac);}
+    .dp-area:hover,.dp-area.sel{border-color:var(--p);}
+    .dp-area-name{font-size:11px;font-weight:700;}
+    .dp-area-q{font-size:9px;color:var(--m);margin-top:3px;}
+    textarea{width:100%;padding:9px 11px;background:var(--bg);border:1px solid var(--b2);color:var(--t);font-family:'Barlow',sans-serif;font-size:12px;outline:none;resize:vertical;min-height:54px;margin-bottom:10px;transition:border-color .15s;}
+    textarea:focus{border-color:var(--p);}
+    .dp-actions{display:flex;gap:8px;}
+    .btn-dp-confirm{flex:1;padding:10px;background:var(--p);border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;}
+    .btn-dp-cancel{padding:10px 18px;background:transparent;border:1px solid var(--b2);color:var(--m);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+
+    /* Flash notification */
+    .flash{position:fixed;top:64px;right:16px;padding:12px 18px;background:var(--s);border:1px solid;font-size:12px;font-weight:600;z-index:200;transform:translateX(120%);transition:transform .25s;max-width:280px;}
+    .flash.show{transform:translateX(0);}
+    .flash.ok{border-color:rgba(107,175,130,.4);color:var(--g);}
+    .flash.err{border-color:rgba(192,103,90,.4);color:var(--r);}
+    .flash.info{border-color:rgba(200,169,110,.4);color:var(--a);}
+
+    /* Sidebar cola */
+    .side-hd{padding:14px 16px;border-bottom:1px solid var(--b2);}
+    .side-ttl{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+    .side-tabs{display:flex;}
+    .s-tab{flex:1;padding:10px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--m);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+    .s-tab.active{color:var(--a);border-bottom-color:var(--a);}
+    .side-body{flex:1;overflow-y:auto;padding:10px;}
+    .q-item{padding:10px 12px;background:var(--s2);border:1px solid var(--b2);margin-bottom:6px;display:flex;align-items:center;gap:10px;}
+    .q-num{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--a);min-width:52px;}
+    .q-area{font-size:11px;font-weight:600;}
+    .q-time{font-size:9px;color:var(--m);}
+    .q-badge{padding:1px 6px;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:1px solid;border-radius:1px;}
+    .q-b-d{color:var(--p);border-color:rgba(155,127,212,.3);}
+    .q-b-a{color:var(--g);border-color:rgba(107,175,130,.3);}
+    .q-b-r{color:var(--r);border-color:rgba(192,103,90,.3);}
+    .empty-msg{font-size:11px;color:var(--m);text-align:center;padding:24px;border:1px dashed var(--b2);}
+    #ws-dot{position:fixed;bottom:8px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--r);}
+    #ws-dot.ok{background:var(--g);}
+  </style>
+</head>
+<body>
+<header>
+  <div class="h-badge">Operador</div>
+  <div class="h-title" id="h-title">Ventanilla</div>
+  <div class="h-vent" id="h-vent"></div>
+  <div class="h-clk" id="reloj"></div>
+  <button class="btn-logout" onclick="logout()">Salir</button>
+</header>
+
+<!-- Setup -->
+<div id="setup-screen">
+  <div class="setup-box">
+    <div class="setup-title">Configurar ventanilla</div>
+    <div class="lbl">Sucursal</div>
+    <select id="sel-suc" onchange="loadVentanillas()">
+      <option value="">Seleccione sucursal...</option>
+    </select>
+    <div class="lbl">Ventanilla</div>
+    <select id="sel-vent">
+      <option value="">Seleccione ventanilla...</option>
+    </select>
+    <button class="btn-start" onclick="startSession()">Iniciar turno ▶</button>
+  </div>
+</div>
+
+<!-- Main shell (hidden until setup) -->
+<div class="shell" id="main-shell" style="display:none">
+  <div class="col-main">
+    <!-- Turno actual -->
+    <div class="tur-card" id="tur-card">
+      <div class="tur-tag">Turno en atención</div>
+      <div class="tur-num" id="tur-num">—</div>
+      <div class="tur-area" id="tur-area">Sin turno activo</div>
+      <div class="tur-meta" id="tur-meta"></div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="action-row">
+      <button class="btn-action btn-call" onclick="llamarSiguiente()">▶ Llamar siguiente</button>
+    </div>
+    <div class="action-row" id="active-actions" style="display:none">
+      <button class="btn-action btn-done"    onclick="finishTurno('atendido')">✓ Atendido</button>
+      <button class="btn-action btn-absent"  onclick="finishTurno('ausente')">✗ Ausente</button>
+      <button class="btn-action btn-derive"  onclick="toggleDerive()">↗ Derivar</button>
+      <button class="btn-action btn-attention" onclick="llamarSiguiente()" style="flex:0.5">↓ Volver a llamar</button>
+    </div>
+
+    <!-- Panel de derivación -->
+    <div class="derive-panel" id="derive-panel">
+      <div class="dp-title">↗ Derivar a otra área</div>
+      <div class="dp-areas" id="dp-areas"></div>
+      <textarea id="dp-reason" placeholder="Motivo de derivación (opcional)"></textarea>
+      <div class="dp-actions">
+        <button class="btn-dp-cancel" onclick="toggleDerive()">Cancelar</button>
+        <button class="btn-dp-confirm" onclick="confirmarDerivacion()">Confirmar derivación</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-side">
+    <div class="side-hd">
+      <div class="side-ttl">Cola de turnos</div>
+    </div>
+    <div class="side-tabs">
+      <div class="s-tab active" onclick="setTab('espera')">En espera</div>
+      <div class="s-tab" onclick="setTab('historia')">Historial</div>
+    </div>
+    <div class="side-body" id="side-body"></div>
+  </div>
+</div>
+
+<div class="flash" id="flash"></div>
+<div id="ws-dot"></div>
+
+<script src="/shared/turnero-client.js"></script>
+<script>
+  const user = requireLogin(['operador','admin','supervisor']);
+  if (!user) throw '';
+
+  liveClock(document.getElementById('reloj'));
+  document.getElementById('h-title').textContent = user.org_nombre || 'Operador';
+
+  const orgId = user.org_id;
+  let sucursalId   = null;
+  let ventanillaId = null;
+  let ventanilla   = null;
+  let currentTurno = null;
+  let areas        = [];
+  let currentTab   = 'espera';
+  let selDeriveArea= null;
+  let ws;
+
+  // ── Setup ────────────────────────────────────────────────────
+  async function init() {
+    // Si el user ya tiene asignación hoy, usarla directo
+    const me = await apiGet('/auth/me');
+    if (me.ventanilla) {
+      ventanillaId = me.ventanilla.id;
+      ventanilla   = me.ventanilla;
+      sucursalId   = user.suc_id || user.sucursales?.[0]?.id;
+      startMain();
+      return;
+    }
+    // Cargar sucursales en selector
+    const suc = user.sucursales || [];
+    const ss  = document.getElementById('sel-suc');
+    suc.forEach(s => { const o = document.createElement('option'); o.value = s.id; o.textContent = s.nombre; ss.appendChild(o); });
+    if (suc.length === 1) { ss.value = suc[0].id; loadVentanillas(); }
+  }
+
+  async function loadVentanillas() {
+    sucursalId = parseInt(document.getElementById('sel-suc').value);
+    if (!sucursalId) return;
+    try {
+      const data  = await apiGet(`/orgs/areas/list?suc_id=${sucursalId}`);
+      areas = data;
+      const vents = data.flatMap(a=>a.ventanillas||[]);
+      const sv    = document.getElementById('sel-vent');
+      sv.innerHTML = '<option value="">Seleccione ventanilla...</option>';
+      vents.filter(v=>v.activo).forEach(v => { const o = document.createElement('option'); o.value=v.id; o.textContent=`${v.nombre} — ${data.find(a=>a.id===v.area_id)?.nombre||''}`; sv.appendChild(o); });
+    } catch(e) {}
+  }
+
+  async function startSession() {
+    ventanillaId = parseInt(document.getElementById('sel-vent').value);
+    if (!ventanillaId) return alert('Seleccione una ventanilla');
+    const sucSel = document.getElementById('sel-suc').value;
+    sucursalId = parseInt(sucSel) || (user.sucursales?.[0]?.id);
+    // Registrar asignación
+    try {
+      await apiPost('/orgs/asignaciones', { usuario_id: user.id, ventanilla_id: ventanillaId });
+      const allVents = areas.flatMap(a=>(a.ventanillas||[]).map(v=>({...v,area:a})));
+      const v = allVents.find(x=>x.id===ventanillaId);
+      ventanilla = v;
+      startMain();
+    } catch(e) { alert(e.message); }
+  }
+
+  function startMain() {
+    document.getElementById('setup-screen').style.display   = 'none';
+    document.getElementById('main-shell').style.display = 'flex';
+    const nombre = ventanilla?.nombre || 'Ventanilla';
+    document.getElementById('h-vent').textContent = nombre;
+    // Init WS
+    ws = new TurneroWS({
+      view: 'operador', orgId, sucId: sucursalId,
+      handlers: {
+        onOpen:  ()=>document.getElementById('ws-dot').classList.add('ok'),
+        onClose: ()=>document.getElementById('ws-dot').classList.remove('ok'),
+        turno_llamado:    (d)=>{ if (d?.ventanilla_id===ventanillaId) setCurrentTurno(d); refreshQueue(); },
+        turno_emitido:    ()=>refreshQueue(),
+        turno_actualizado:()=>refreshQueue(),
+        turno_derivado:   (d)=>{ refreshQueue(); flash('Turno derivado','info'); },
+      }
+    });
+    loadAreas();
+    refreshQueue();
+  }
+
+  async function loadAreas() {
+    if (!sucursalId) return;
+    try {
+      const data = await apiGet(`/orgs/areas/list?suc_id=${sucursalId}`);
+      areas = data;
+    } catch(e) {}
+  }
+
+  // ── Llamar siguiente ──────────────────────────────────────────
+  async function llamarSiguiente() {
+    if (!ventanillaId) return;
+    try {
+      const turno = await apiPost('/turnos/llamar', { ventanilla_id: ventanillaId, suc_id: sucursalId });
+      setCurrentTurno(turno);
+      refreshQueue();
+    } catch(e) { flash('Sin turnos en espera','info'); }
+  }
+
+  function setCurrentTurno(t) {
+    currentTurno = t;
+    const color = t.area_color || 'var(--a)';
+    document.getElementById('tur-card').style.setProperty('--ac', color);
+    document.getElementById('tur-num').style.color = color;
+    document.getElementById('tur-num').textContent  = t.numero;
+    document.getElementById('tur-area').textContent = t.area_nombre;
+    const metas = [
+      t.hora_emision    ? `Emitido <span>${formatTime(t.hora_emision)}</span>` : '',
+      t.tiempo_espera_s != null ? `Espera <span>${formatSecs(t.tiempo_espera_s)}</span>` : '',
+      t.derivado_de_num ? `Derivado de <span>${t.derivado_de_num}</span>` : '',
+    ].filter(Boolean);
+    document.getElementById('tur-meta').innerHTML = metas.map(m=>`<div class="tur-meta-item">${m}</div>`).join('');
+    if (t.derivado_de_num) {
+      document.getElementById('tur-card').insertAdjacentHTML('beforeend','<div class="drv-badge">↗ Derivado</div>');
+    }
+    document.getElementById('active-actions').style.display = 'flex';
+    hideDerive();
+  }
+
+  // ── Finalizar turno ───────────────────────────────────────────
+  async function finishTurno(estado) {
+    if (!currentTurno) return llamarSiguiente();
+    try {
+      await apiPut(`/turnos/${currentTurno.id}/estado`, { estado });
+      currentTurno = null;
+      document.getElementById('tur-num').textContent  = '—';
+      document.getElementById('tur-area').textContent = 'Sin turno activo';
+      document.getElementById('tur-meta').innerHTML   = '';
+      document.getElementById('tur-card').querySelectorAll('.drv-badge').forEach(e=>e.remove());
+      document.getElementById('active-actions').style.display = 'none';
+      hideDerive();
+      flash(`Turno marcado: ${estado}`, 'ok');
+      refreshQueue();
+    } catch(e) { flash(e.message,'err'); }
+  }
+
+  // ── Derivación ────────────────────────────────────────────────
+  function toggleDerive() {
+    const p = document.getElementById('derive-panel');
+    if (p.classList.toggle('show')) {
+      selDeriveArea = null;
+      document.getElementById('dp-reason').value = '';
+      renderDeriveAreas();
+    }
+  }
+  function hideDerive() {
+    document.getElementById('derive-panel').classList.remove('show');
+    selDeriveArea = null;
+  }
+
+  async function renderDeriveAreas() {
+    if (!sucursalId) return;
+    try {
+      const estado = await apiGet(`/turnos/estado?suc_id=${sucursalId}`);
+      const countMap = {};
+      (estado.esperando||[]).forEach(t=>{ countMap[t.area_id]=(countMap[t.area_id]||0)+1; });
+      const eligible = areas.filter(a => a.activo && (!currentTurno || a.id !== currentTurno.area_id));
+      document.getElementById('dp-areas').innerHTML = eligible.map(a=>`
+        <div class="dp-area" style="--ac:${a.color}" data-id="${a.id}" onclick="selectDeriveArea(${a.id})">
+          <div class="dp-area-name">${a.nombre}</div>
+          <div class="dp-area-q">${countMap[a.id]||0} en espera</div>
+        </div>`).join('');
+    } catch(e) {}
+  }
+
+  function selectDeriveArea(id) {
+    selDeriveArea = id;
+    document.querySelectorAll('.dp-area').forEach(el => {
+      el.classList.toggle('sel', parseInt(el.dataset.id) === id);
+    });
+  }
+
+  async function confirmarDerivacion() {
+    if (!currentTurno) return;
+    if (!selDeriveArea) { flash('Seleccione un área de destino','err'); return; }
+    const motivo = document.getElementById('dp-reason').value.trim();
+    try {
+      const result = await apiPost(`/turnos/${currentTurno.id}/derivar`, { area_id_destino: selDeriveArea, motivo });
+      currentTurno = null;
+      document.getElementById('tur-num').textContent  = '—';
+      document.getElementById('tur-area').textContent = 'Sin turno activo';
+      document.getElementById('tur-meta').innerHTML   = '';
+      document.getElementById('tur-card').querySelectorAll('.drv-badge').forEach(e=>e.remove());
+      document.getElementById('active-actions').style.display = 'none';
+      hideDerive();
+      flash(`Derivado → ${result.nuevo.area_nombre} · ${result.nuevo.numero}`,'info');
+      refreshQueue();
+    } catch(e) { flash(e.message,'err'); }
+  }
+
+  // ── Queue / history ───────────────────────────────────────────
+  async function refreshQueue() {
+    if (!sucursalId) return;
+    try {
+      if (currentTab === 'espera') {
+        const estado = await apiGet(`/turnos/estado?suc_id=${sucursalId}`);
+        const items = estado.esperando || [];
+        document.getElementById('side-body').innerHTML = items.length
+          ? items.map(t=>`<div class="q-item">
+              <div class="q-num" style="color:${t.area_color}">${t.numero}</div>
+              <div style="flex:1"><div class="q-area">${t.area_nombre}</div>
+                <div class="q-time">${formatTime(t.hora_emision)}</div>
+                ${t.derivado_de_num?`<span class="q-badge q-b-d">↗ Der.</span>`:''}
+              </div></div>`).join('')
+          : '<div class="empty-msg">No hay turnos en espera</div>';
+      } else {
+        const history = await apiGet(`/turnos?suc_id=${sucursalId}&limit=50`);
+        const done = history.filter(t=>['atendido','ausente','derivado','cancelado'].includes(t.estado));
+        document.getElementById('side-body').innerHTML = done.length
+          ? done.map(t=>{
+              const bc = t.estado==='atendido'?'q-b-a':t.estado==='derivado'?'q-b-d':'q-b-r';
+              return `<div class="q-item">
+                <div class="q-num" style="color:${t.area_color}">${t.numero}</div>
+                <div style="flex:1">
+                  <div class="q-area">${t.area_nombre}</div>
+                  <div class="q-time">${formatTime(t.hora_fin||t.hora_emision)}</div>
+                </div>
+                <span class="q-badge ${bc}">${t.estado}</span>
+              </div>`;}).join('')
+          : '<div class="empty-msg">Sin historial hoy</div>';
+      }
+    } catch(e) {}
+  }
+
+  function setTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.s-tab').forEach((el,i)=>el.classList.toggle('active', (i===0&&tab==='espera')||(i===1&&tab==='historia')));
+    refreshQueue();
+  }
+
+  // ── Flash ─────────────────────────────────────────────────────
+  let flashTimer;
+  function flash(msg, type='ok') {
+    const el = document.getElementById('flash');
+    el.textContent = msg; el.className = `flash show ${type}`;
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(()=>el.classList.remove('show'), 3500);
+  }
+
+  init();
+</script>
+</body>
+</html>

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Super Admin — Sistema de Turnos</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap');
+    :root{--bg:#080C12;--s:#0E1117;--s2:#161B25;--b:#1E2535;--b2:#252D3D;--t:#D4D8E1;--m:#6B7590;--a:#C8A96E;--g:#6BAF82;--r:#C0675A;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;display:flex;flex-direction:column;}
+    header{height:54px;background:var(--s);border-bottom:1px solid var(--b2);display:flex;align-items:center;padding:0 24px;gap:12px;flex-shrink:0;}
+    .h-badge{padding:3px 10px;background:rgba(200,169,110,.15);border:1px solid rgba(200,169,110,.4);color:var(--a);font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;}
+    .h-title{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;}
+    .h-clk{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--a);}
+    .h-user{font-size:11px;color:var(--m);margin-right:8px;}
+    .btn-logout{padding:5px 12px;background:transparent;border:1px solid var(--b2);color:var(--m);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .15s;}
+    .btn-logout:hover{border-color:var(--r);color:var(--r);}
+
+    .shell{flex:1;display:flex;}
+    nav{width:192px;background:var(--s);border-right:1px solid var(--b2);padding:14px 0;flex-shrink:0;}
+    .nav-item{display:flex;align-items:center;gap:9px;padding:10px 16px;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--m);cursor:pointer;border-left:2px solid transparent;transition:all .15s;}
+    .nav-item:hover{color:var(--t);}
+    .nav-item.active{color:var(--a);border-left-color:var(--a);background:rgba(200,169,110,.05);}
+    .nav-dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;}
+    .nav-sep{height:1px;background:var(--b2);margin:8px 14px;}
+
+    main{flex:1;overflow-y:auto;}
+    .page{padding:28px;display:none;}
+    .page.active{display:block;}
+    .page-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;}
+    .page-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;}
+    .page-sub{font-size:12px;color:var(--m);margin-top:4px;}
+
+    /* Cards */
+    .card{background:var(--s);border:1px solid var(--b2);padding:20px;margin-bottom:14px;}
+    .card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--b2);}
+    .card-ttl{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+
+    /* Org grid */
+    .orgs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
+    .org-card{background:var(--s2);border:1px solid var(--b2);padding:20px;border-top:3px solid var(--oc,var(--a));transition:border-color .15s;}
+    .org-card:hover{border-color:var(--oc,var(--a));}
+    .oc-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+    .oc-logo{width:36px;height:36px;background:var(--b2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;color:var(--oc,var(--a));flex-shrink:0;}
+    .oc-name{font-weight:700;font-size:14px;}
+    .oc-slug{font-size:10px;color:var(--m);font-family:'IBM Plex Mono',monospace;margin-top:1px;}
+    .oc-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px;}
+    .oc-stat{text-align:center;padding:8px;background:var(--bg);}
+    .oc-sv{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:var(--t);}
+    .oc-sl{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin-top:2px;}
+    .oc-actions{display:flex;gap:6px;}
+    .btn-sm{padding:6px 12px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:1px solid;transition:all .15s;}
+    .btn-edit{background:transparent;border-color:var(--b2);color:var(--m);}
+    .btn-edit:hover{border-color:var(--a);color:var(--a);}
+    .btn-access{background:var(--a);border-color:var(--a);color:#0E1117;}
+    .btn-access:hover{opacity:.85;}
+    .btn-toggle{background:transparent;border-color:rgba(192,103,90,.3);color:var(--r);}
+    .btn-toggle:hover{background:rgba(192,103,90,.08);}
+    .btn-toggle.act{border-color:rgba(107,175,130,.3);color:var(--g);}
+
+    /* Badges */
+    .badge{display:inline-block;padding:2px 8px;font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:1px solid;}
+    .b-g{color:var(--g);border-color:rgba(107,175,130,.3);background:rgba(107,175,130,.07);}
+    .b-r{color:var(--r);border-color:rgba(192,103,90,.3);background:rgba(192,103,90,.07);}
+    .b-a{color:var(--a);border-color:rgba(200,169,110,.3);background:rgba(200,169,110,.07);}
+    .b-m{color:var(--m);border-color:var(--b2);}
+
+    /* Stats header */
+    .global-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:26px;}
+    .gs-cell{background:var(--s);border:1px solid var(--b2);padding:18px;text-align:center;}
+    .gs-v{font-family:'IBM Plex Mono',monospace;font-size:34px;font-weight:600;color:var(--a);line-height:1;}
+    .gs-l{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--m);margin-top:6px;}
+
+    /* Modal */
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:200;}
+    .modal-bg.open{display:flex;}
+    .modal{background:var(--s);border:1px solid var(--b2);border-top:2px solid var(--a);width:100%;max-width:500px;max-height:90vh;overflow-y:auto;padding:28px;}
+    .modal-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:20px;}
+    .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;padding-top:14px;border-top:1px solid var(--b2);}
+    .frow{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .lbl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--m);margin-bottom:5px;}
+    input,select,textarea{width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--b2);color:var(--t);font-family:'Barlow',sans-serif;font-size:13px;outline:none;transition:border-color .15s;margin-bottom:12px;}
+    input:focus,select:focus{border-color:var(--a);}
+    .btn-p{padding:10px 20px;background:var(--a);border:none;color:#0E1117;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:opacity .15s;}
+    .btn-p:hover{opacity:.85;}
+    .btn-o{padding:10px 18px;background:transparent;border:1px solid var(--b2);color:var(--m);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .15s;}
+    .btn-o:hover{border-color:var(--a);color:var(--a);}
+    .section-head{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--a);margin:16px 0 10px;padding-top:12px;border-top:1px solid var(--b2);}
+
+    .alert{padding:10px 14px;font-size:12px;font-weight:600;border:1px solid;margin-bottom:14px;display:none;}
+    .alert-ok{color:var(--g);border-color:rgba(107,175,130,.3);background:rgba(107,175,130,.07);}
+    .alert-err{color:var(--r);border-color:rgba(192,103,90,.3);background:rgba(192,103,90,.07);}
+
+    #ws-badge{position:fixed;bottom:12px;right:12px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;border:1px solid;z-index:100;}
+    .ws-ok{color:var(--g);border-color:rgba(107,175,130,.3);background:rgba(107,175,130,.07);}
+    .ws-off{color:var(--r);border-color:rgba(192,103,90,.3);background:rgba(192,103,90,.07);}
+  </style>
+</head>
+<body>
+<header>
+  <div class="h-badge">Superadmin</div>
+  <div class="h-title">Panel Global</div>
+  <div class="h-clk" id="reloj"></div>
+  <div class="h-user" id="h-user"></div>
+  <button class="btn-logout" onclick="logout()">Salir</button>
+</header>
+<div class="shell">
+  <nav>
+    <div class="nav-item active" data-page="overview">  <div class="nav-dot"></div>Resumen</div>
+    <div class="nav-item"        data-page="orgs">      <div class="nav-dot"></div>Organizaciones</div>
+    <div class="nav-sep"></div>
+    <div class="nav-item"        data-page="ws-monitor"><div class="nav-dot"></div>Monitor WS</div>
+  </nav>
+
+  <main>
+    <!-- RESUMEN -->
+    <div class="page active" id="page-overview">
+      <div class="page-hd">
+        <div><div class="page-title">Resumen global</div><div class="page-sub">Todas las organizaciones · en tiempo real</div></div>
+        <button class="btn-o" onclick="loadOverview()">↻ Actualizar</button>
+      </div>
+      <div class="global-stats" id="global-stats"></div>
+      <div class="orgs-grid" id="overview-orgs"></div>
+    </div>
+
+    <!-- ORGANIZACIONES -->
+    <div class="page" id="page-orgs">
+      <div class="page-hd">
+        <div><div class="page-title">Organizaciones</div><div class="page-sub">Gestión de bancos, mutuales, hospitales, etc.</div></div>
+        <button class="btn-p" onclick="openNewOrgModal()">+ Nueva organización</button>
+      </div>
+      <div class="alert" id="orgs-alert"></div>
+      <div id="orgs-table-wrap"></div>
+    </div>
+
+    <!-- WS MONITOR -->
+    <div class="page" id="page-ws-monitor">
+      <div class="page-hd">
+        <div><div class="page-title">Monitor WebSocket</div><div class="page-sub">Conexiones activas en tiempo real</div></div>
+        <button class="btn-o" onclick="loadWSStats()">↻ Refrescar</button>
+      </div>
+      <div id="ws-stats-wrap"></div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal nueva org -->
+<div class="modal-bg" id="modal-new-org">
+  <div class="modal">
+    <div class="modal-title">Nueva organización</div>
+    <div class="alert" id="new-org-alert"></div>
+    <div class="frow">
+      <div><div class="lbl">Nombre</div><input id="no-nombre" placeholder="Ej: Banco Provincial"></div>
+      <div><div class="lbl">Slug (ID único)</div><input id="no-slug" placeholder="banco-provincial"></div>
+    </div>
+    <div class="frow">
+      <div><div class="lbl">Tipo</div>
+        <select id="no-tipo">
+          <option value="bank">Banco / Financiera</option>
+          <option value="mutual">Mutual / Cooperativa</option>
+          <option value="hospital">Hospital / Clínica</option>
+          <option value="government">Gobierno</option>
+          <option value="airport">Aeropuerto</option>
+          <option value="office">Oficina</option>
+          <option value="other">Otro</option>
+        </select>
+      </div>
+      <div><div class="lbl">Plan</div>
+        <select id="no-plan">
+          <option value="basic">Basic</option>
+          <option value="pro" selected>Pro</option>
+          <option value="enterprise">Enterprise</option>
+          <option value="trial">Trial</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div><div class="lbl">Máx. ventanillas</div><input id="no-max-vent" type="number" value="20" min="1"></div>
+      <div><div class="lbl">Máx. usuarios</div><input id="no-max-usr" type="number" value="10" min="1"></div>
+    </div>
+    <div><div class="lbl">Color primario</div><input id="no-color" type="color" value="#C8A96E" style="height:38px;padding:4px;cursor:pointer;"></div>
+    <div class="section-head">Administrador de la organización</div>
+    <div class="frow">
+      <div><div class="lbl">Nombre completo</div><input id="no-admin-name" placeholder="Administrador"></div>
+      <div><div class="lbl">Username</div><input id="no-admin-user" placeholder="admin"></div>
+    </div>
+    <div class="frow">
+      <div><div class="lbl">Contraseña</div><input id="no-admin-pass" type="password" placeholder="min. 8 caracteres"></div>
+      <div><div class="lbl">Email (opcional)</div><input id="no-admin-email" type="email" placeholder="admin@org.com"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-o" onclick="closeModal('modal-new-org')">Cancelar</button>
+      <button class="btn-p" onclick="createOrg()">Crear organización</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal editar org -->
+<div class="modal-bg" id="modal-edit-org">
+  <div class="modal">
+    <div class="modal-title">Editar organización</div>
+    <input type="hidden" id="eo-id">
+    <div class="frow">
+      <div><div class="lbl">Nombre</div><input id="eo-nombre"></div>
+      <div><div class="lbl">Plan</div>
+        <select id="eo-plan">
+          <option value="trial">Trial</option>
+          <option value="basic">Basic</option>
+          <option value="pro">Pro</option>
+          <option value="enterprise">Enterprise</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div><div class="lbl">Máx. ventanillas</div><input id="eo-max-vent" type="number" min="1"></div>
+      <div><div class="lbl">Máx. usuarios</div><input id="eo-max-usr" type="number" min="1"></div>
+    </div>
+    <div><div class="lbl">Color primario</div><input id="eo-color" type="color" style="height:38px;padding:4px;cursor:pointer;"></div>
+    <div><div class="lbl">Logo URL</div><input id="eo-logo" placeholder="https://..."></div>
+    <div class="modal-footer">
+      <button class="btn-o" onclick="closeModal('modal-edit-org')">Cancelar</button>
+      <button class="btn-p" onclick="saveOrg()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="ws-badge" class="ws-badge ws-off">Sin conexión</div>
+
+<script src="/shared/turnero-client.js"></script>
+<script>
+  const user = requireLogin(['superadmin']);
+  if (!user) throw '';
+  document.getElementById('h-user').textContent = user.nombre;
+  liveClock(document.getElementById('reloj'));
+
+  let allOrgs = [];
+
+  // ── Navigation ──────────────────────────────────────────────
+  document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+      document.getElementById('page-'+item.dataset.page).classList.add('active');
+      item.classList.add('active');
+      const loaders = { overview: loadOverview, orgs: loadOrgs, 'ws-monitor': loadWSStats };
+      loaders[item.dataset.page]?.();
+    });
+  });
+
+  // ── Overview ────────────────────────────────────────────────
+  async function loadOverview() {
+    try {
+      const orgs = await apiGet('/orgs');
+      allOrgs = orgs;
+      const totalOrgs     = orgs.length;
+      const activeOrgs    = orgs.filter(o=>o.activo).length;
+      const totalSucursales = orgs.reduce((a,o)=>a+(o.num_sucursales||0),0);
+      const turnosHoy     = orgs.reduce((a,o)=>a+(o.turnos_hoy||0),0);
+
+      document.getElementById('global-stats').innerHTML = [
+        { v: totalOrgs,     l: 'Organizaciones' },
+        { v: activeOrgs,    l: 'Activas' },
+        { v: totalSucursales, l: 'Sucursales' },
+        { v: orgs.reduce((a,o)=>a+(o.num_usuarios||0),0), l: 'Usuarios' },
+        { v: turnosHoy,     l: 'Turnos hoy' },
+      ].map(x=>`<div class="gs-cell"><div class="gs-v">${x.v}</div><div class="gs-l">${x.l}</div></div>`).join('');
+
+      const TIPOS = { bank:'Banco',mutual:'Mutual',hospital:'Hospital',government:'Gobierno',airport:'Aeropuerto',office:'Oficina',other:'Otro' };
+      const PLAN_B = { trial:'b-m',basic:'b-m',pro:'b-a',enterprise:'b-g' };
+      document.getElementById('overview-orgs').innerHTML = orgs.map(o=>`
+        <div class="org-card" style="--oc:${o.color_primario}">
+          <div class="oc-header">
+            <div class="oc-logo" style="color:${o.color_primario}">${o.slug.slice(0,2).toUpperCase()}</div>
+            <div>
+              <div class="oc-name">${o.nombre}</div>
+              <div class="oc-slug">${o.slug} · ${TIPOS[o.tipo]||o.tipo}</div>
+            </div>
+            <span class="badge ${o.activo?'b-g':'b-r'}" style="margin-left:auto">${o.activo?'Activa':'Inactiva'}</span>
+          </div>
+          <div class="oc-stats">
+            <div class="oc-stat"><div class="oc-sv">${o.num_sucursales||0}</div><div class="oc-sl">Sedes</div></div>
+            <div class="oc-stat"><div class="oc-sv">${o.num_usuarios||0}</div><div class="oc-sl">Usuarios</div></div>
+            <div class="oc-stat"><div class="oc-sv">${o.turnos_hoy||0}</div><div class="oc-sl">Turnos hoy</div></div>
+          </div>
+          <div class="oc-actions">
+            <button class="btn-sm btn-edit" onclick="openEditOrg(${o.id})">Editar</button>
+            <button class="btn-sm btn-toggle ${o.activo?'':'act'}" onclick="toggleOrg(${o.id},${o.activo?0:1})">${o.activo?'Desactivar':'Activar'}</button>
+            <span class="badge ${PLAN_B[o.plan]||'b-m'}" style="margin-left:auto;align-self:center">${o.plan}</span>
+          </div>
+        </div>`).join('');
+    } catch(e) { console.error(e); }
+  }
+
+  // ── Organizations table ──────────────────────────────────────
+  async function loadOrgs() {
+    try {
+      const orgs = await apiGet('/orgs');
+      allOrgs = orgs;
+      const TIPOS = { bank:'Banco',mutual:'Mutual',hospital:'Hospital',government:'Gobierno',airport:'Aeropuerto',office:'Oficina',other:'Otro' };
+      document.getElementById('orgs-table-wrap').innerHTML = `
+        <div class="card">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead><tr>
+              <th style="text-align:left;padding:8px 12px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--m);border-bottom:1px solid var(--b2);">Organización</th>
+              <th style="text-align:left;padding:8px 12px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--m);border-bottom:1px solid var(--b2);">Slug</th>
+              <th style="text-align:left;padding:8px 12px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--m);border-bottom:1px solid var(--b2);">Tipo</th>
+              <th style="text-align:left;padding:8px 12px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--m);border-bottom:1px solid var(--b2);">Plan</th>
+              <th style="text-align:right;padding:8px 12px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--m);border-bottom:1px solid var(--b2);">Sedes</th>
+              <th style="text-align:right;padding:8px 12px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--m);border-bottom:1px solid var(--b2);">Usuarios</th>
+              <th style="text-align:right;padding:8px 12px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--m);border-bottom:1px solid var(--b2);">Turnos hoy</th>
+              <th style="text-align:left;padding:8px 12px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--m);border-bottom:1px solid var(--b2);">Estado</th>
+              <th style="border-bottom:1px solid var(--b2);"></th>
+            </tr></thead>
+            <tbody>
+              ${orgs.map(o=>`<tr style="border-bottom:1px solid var(--b2);">
+                <td style="padding:10px 12px;font-weight:600;">${o.nombre}</td>
+                <td style="padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--a)">${o.slug}</td>
+                <td style="padding:10px 12px;font-size:12px;color:var(--m)">${TIPOS[o.tipo]||o.tipo}</td>
+                <td style="padding:10px 12px"><span class="badge b-m">${o.plan}</span></td>
+                <td style="padding:10px 12px;text-align:right;font-family:'IBM Plex Mono',monospace">${o.num_sucursales||0}</td>
+                <td style="padding:10px 12px;text-align:right;font-family:'IBM Plex Mono',monospace">${o.num_usuarios||0}</td>
+                <td style="padding:10px 12px;text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--a)">${o.turnos_hoy||0}</td>
+                <td style="padding:10px 12px"><span class="badge ${o.activo?'b-g':'b-r'}">${o.activo?'Activa':'Inactiva'}</span></td>
+                <td style="padding:10px 12px">
+                  <div style="display:flex;gap:5px">
+                    <button class="btn-sm btn-edit" onclick="openEditOrg(${o.id})">Editar</button>
+                    <button class="btn-sm btn-toggle ${o.activo?'':'act'}" onclick="toggleOrg(${o.id},${o.activo?0:1})">${o.activo?'Desact.':'Activar'}</button>
+                  </div>
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    } catch(e) {}
+  }
+
+  // ── Crear org ────────────────────────────────────────────────
+  function openNewOrgModal() {
+    document.getElementById('new-org-alert').style.display = 'none';
+    document.getElementById('modal-new-org').classList.add('open');
+  }
+
+  async function createOrg() {
+    const body = {
+      nombre:         document.getElementById('no-nombre').value.trim(),
+      slug:           document.getElementById('no-slug').value.trim().toLowerCase().replace(/\s+/g,'-'),
+      tipo:           document.getElementById('no-tipo').value,
+      plan:           document.getElementById('no-plan').value,
+      max_ventanillas: parseInt(document.getElementById('no-max-vent').value),
+      max_usuarios:   parseInt(document.getElementById('no-max-usr').value),
+      color_primario: document.getElementById('no-color').value,
+      admin_nombre:   document.getElementById('no-admin-name').value.trim(),
+      admin_username: document.getElementById('no-admin-user').value.trim(),
+      admin_password: document.getElementById('no-admin-pass').value,
+      admin_email:    document.getElementById('no-admin-email').value.trim() || undefined,
+    };
+    if (!body.nombre || !body.slug || !body.admin_username || !body.admin_password) {
+      return showAlert('new-org-alert', 'Complete todos los campos requeridos', 'err');
+    }
+    try {
+      await apiPost('/orgs', body);
+      closeModal('modal-new-org');
+      showAlert('orgs-alert', `Organización "${body.nombre}" creada exitosamente`, 'ok');
+      loadOrgs(); loadOverview();
+    } catch(e) { showAlert('new-org-alert', e.message, 'err'); }
+  }
+
+  // ── Editar org ───────────────────────────────────────────────
+  function openEditOrg(id) {
+    const o = allOrgs.find(x=>x.id===id);
+    if (!o) return;
+    document.getElementById('eo-id').value      = id;
+    document.getElementById('eo-nombre').value  = o.nombre;
+    document.getElementById('eo-plan').value    = o.plan;
+    document.getElementById('eo-max-vent').value= o.max_ventanillas;
+    document.getElementById('eo-max-usr').value = o.max_usuarios;
+    document.getElementById('eo-color').value   = o.color_primario;
+    document.getElementById('eo-logo').value    = o.logo_url || '';
+    document.getElementById('modal-edit-org').classList.add('open');
+  }
+
+  async function saveOrg() {
+    const id = document.getElementById('eo-id').value;
+    const body = {
+      nombre:          document.getElementById('eo-nombre').value.trim(),
+      plan:            document.getElementById('eo-plan').value,
+      max_ventanillas: parseInt(document.getElementById('eo-max-vent').value),
+      max_usuarios:    parseInt(document.getElementById('eo-max-usr').value),
+      color_primario:  document.getElementById('eo-color').value,
+      logo_url:        document.getElementById('eo-logo').value || null,
+    };
+    try {
+      await apiPut(`/orgs/${id}`, body);
+      closeModal('modal-edit-org');
+      loadOrgs(); loadOverview();
+    } catch(e) { alert(e.message); }
+  }
+
+  async function toggleOrg(id, activo) {
+    if (!confirm(`¿${activo ? 'Activar' : 'Desactivar'} esta organización?`)) return;
+    try { await apiPut(`/orgs/${id}`, { activo }); loadOrgs(); loadOverview(); } catch(e) {}
+  }
+
+  // ── WS Monitor ───────────────────────────────────────────────
+  async function loadWSStats() {
+    try {
+      const h = await apiGet('/health');
+      const ws = h.ws || {};
+      document.getElementById('ws-stats-wrap').innerHTML = `
+        <div class="card">
+          <div class="card-hd"><div class="card-ttl">Conexiones WebSocket activas</div></div>
+          <div style="display:flex;gap:10px;margin-bottom:14px;">
+            <div class="gs-cell" style="flex:1"><div class="gs-v">${ws.total||0}</div><div class="gs-l">Total conexiones</div></div>
+          </div>
+          <div style="font-size:11px;color:var(--m)">Por organización:</div>
+          <div style="margin-top:8px;">
+            ${Object.entries(ws.byOrg||{}).map(([k,v])=>`
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--b2);">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--a)">${k}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-weight:600">${v}</span>
+              </div>`).join('') || '<div style="color:var(--m);font-size:12px;padding:12px 0">Sin conexiones activas</div>'}
+          </div>
+          <div style="margin-top:14px;font-size:10px;color:var(--m)">Servidor activo desde hace ${Math.round((h.uptime||0)/60)} min</div>
+        </div>`;
+    } catch(e) {}
+  }
+
+  // ── Utils ─────────────────────────────────────────────────────
+  function showAlert(id, msg, t) {
+    const e = document.getElementById(id);
+    e.textContent = msg; e.className = `alert alert-${t}`; e.style.display = 'block';
+    if (t==='ok') setTimeout(()=>e.style.display='none', 4000);
+  }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  // ── WS ────────────────────────────────────────────────────────
+  new TurneroWS({
+    view: 'superadmin',
+    handlers: {
+      onOpen:  ()=>{ document.getElementById('ws-badge').className='ws-badge ws-ok'; document.getElementById('ws-badge').textContent='En línea'; },
+      onClose: ()=>{ document.getElementById('ws-badge').className='ws-badge ws-off'; document.getElementById('ws-badge').textContent='Sin conexión'; },
+      org_created: ()=>{ loadOverview(); },
+      org_updated: ()=>{ loadOverview(); },
+      default: ()=>{ loadOverview(); },
+    }
+  });
+
+  loadOverview();
+</script>
+</body>
+</html>

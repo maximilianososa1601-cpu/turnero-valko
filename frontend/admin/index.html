@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin — Turnos</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800&family=IBM+Plex+Mono:wght@500;600&display=swap');
+    :root{--bg:#080C12;--s:#0E1117;--s2:#161B25;--b:#1E2535;--b2:#252D3D;--t:#D4D8E1;--m:#6B7590;--a:#C8A96E;--g:#6BAF82;--r:#C0675A;--p:#9B7FD4;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;display:flex;flex-direction:column;}
+    header{height:54px;background:var(--s);border-bottom:1px solid var(--b2);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0;}
+    .h-badge{padding:3px 9px;background:rgba(200,169,110,.12);border:1px solid rgba(200,169,110,.3);color:var(--a);font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
+    .h-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;}
+    .h-org{font-size:11px;color:var(--m);margin-left:4px;}
+    .h-clk{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--a);}
+    .btn-logout{padding:5px 11px;background:transparent;border:1px solid var(--b2);color:var(--m);font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;transition:all .15s;margin-left:8px;}
+    .btn-logout:hover{border-color:var(--r);color:var(--r);}
+    .shell{flex:1;display:flex;overflow:hidden;}
+    nav{width:180px;background:var(--s);border-right:1px solid var(--b2);padding:14px 0;flex-shrink:0;}
+    .nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--m);cursor:pointer;border-left:2px solid transparent;transition:all .15s;}
+    .nav-item:hover{color:var(--t);}
+    .nav-item.active{color:var(--a);border-left-color:var(--a);background:rgba(200,169,110,.05);}
+    .nav-dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;}
+    .nav-sep{height:1px;background:var(--b2);margin:8px 14px;}
+    main{flex:1;overflow-y:auto;}
+    .page{padding:24px;display:none;}
+    .page.active{display:block;}
+    .page-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;}
+    .page-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;}
+    .page-sub{font-size:12px;color:var(--m);margin-top:3px;}
+    .kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:18px;}
+    .kpi{background:var(--s);border:1px solid var(--b2);padding:16px;text-align:center;}
+    .kpi-v{font-family:'IBM Plex Mono',monospace;font-size:32px;font-weight:700;color:var(--a);line-height:1;}
+    .kpi-l{font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--m);margin-top:5px;}
+    .card{background:var(--s);border:1px solid var(--b2);padding:18px;margin-bottom:14px;}
+    .card-title{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--b2);}
+    table{width:100%;border-collapse:collapse;font-size:12px;}
+    th{text-align:left;padding:7px 10px;font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--m);border-bottom:1px solid var(--b2);}
+    td{padding:9px 10px;border-bottom:1px solid var(--b2);}
+    tr:last-child td{border-bottom:none;}
+    tr:hover td{background:rgba(255,255,255,.02);}
+    .badge{display:inline-block;padding:2px 7px;font-size:8px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;border:1px solid;}
+    .b-g{color:var(--g);border-color:rgba(107,175,130,.3);background:rgba(107,175,130,.06);}
+    .b-r{color:var(--r);border-color:rgba(192,103,90,.3);background:rgba(192,103,90,.06);}
+    .b-a{color:var(--a);border-color:rgba(200,169,110,.3);background:rgba(200,169,110,.06);}
+    .b-p{color:var(--p);border-color:rgba(155,127,212,.3);background:rgba(155,127,212,.06);}
+    .b-m{color:var(--m);border-color:var(--b2);}
+    .lbl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--m);margin-bottom:5px;}
+    input,select,textarea{width:100%;padding:9px 11px;background:var(--bg);border:1px solid var(--b2);color:var(--t);font-family:'Barlow',sans-serif;font-size:13px;outline:none;transition:border-color .15s;margin-bottom:12px;}
+    input:focus,select:focus{border-color:var(--a);}
+    .btn-p{padding:9px 18px;background:var(--a);border:none;color:#080C12;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;cursor:pointer;transition:opacity .15s;}
+    .btn-p:hover{opacity:.85;}
+    .btn-o{padding:8px 16px;background:transparent;border:1px solid var(--b2);color:var(--m);font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .15s;}
+    .btn-o:hover{border-color:var(--a);color:var(--a);}
+    .btn-r{padding:7px 13px;background:transparent;border:1px solid rgba(192,103,90,.3);color:var(--r);font-size:10px;font-weight:600;cursor:pointer;transition:all .15s;}
+    .btn-r:hover{background:rgba(192,103,90,.08);}
+    .frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:200;}
+    .modal-bg.open{display:flex;}
+    .modal{background:var(--s);border:1px solid var(--b2);border-top:2px solid var(--a);width:100%;max-width:480px;max-height:92vh;overflow-y:auto;padding:24px;}
+    .modal-title{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:18px;}
+    .modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid var(--b2);}
+    .alert{padding:9px 12px;font-size:11px;font-weight:600;border:1px solid;margin-bottom:12px;display:none;}
+    .alert-ok{color:var(--g);border-color:rgba(107,175,130,.3);background:rgba(107,175,130,.06);}
+    .alert-err{color:var(--r);border-color:rgba(192,103,90,.3);background:rgba(192,103,90,.06);}
+    .dates-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;}
+    .dates-row label{font-size:10px;color:var(--m);}
+    .dates-row input{width:140px;margin-bottom:0;}
+    #ws-dot{position:fixed;bottom:8px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--r);}
+    #ws-dot.ok{background:var(--g);}
+    .mini{font-family:'IBM Plex Mono',monospace;font-size:11px;}
+  </style>
+</head>
+<body>
+<header>
+  <div class="h-badge">Admin</div>
+  <div class="h-title" id="h-title">Panel de administración</div>
+  <div class="h-org" id="h-org"></div>
+  <div class="h-clk" id="reloj"></div>
+  <button class="btn-logout" onclick="logout()">Salir</button>
+</header>
+<div class="shell">
+  <nav>
+    <div class="nav-item active" data-page="overview"><div class="nav-dot"></div>Resumen</div>
+    <div class="nav-item" data-page="turnos"><div class="nav-dot"></div>Turnos</div>
+    <div class="nav-sep"></div>
+    <div class="nav-item" data-page="reportes"><div class="nav-dot"></div>Reportes</div>
+    <div class="nav-sep"></div>
+    <div class="nav-item" data-page="areas"><div class="nav-dot"></div>Áreas</div>
+    <div class="nav-item" data-page="ventanillas"><div class="nav-dot"></div>Ventanillas</div>
+    <div class="nav-item" data-page="usuarios"><div class="nav-dot"></div>Usuarios</div>
+    <div class="nav-sep"></div>
+    <div class="nav-item" data-page="citas"><div class="nav-dot"></div>Citas previas</div>
+    <div class="nav-item" data-page="notif-log"><div class="nav-dot"></div>Notificaciones</div>
+    <div class="nav-sep"></div>
+    <div class="nav-item" data-page="config"><div class="nav-dot"></div>Configuración</div>
+  </nav>
+  <main>
+    <!-- RESUMEN -->
+    <div class="page active" id="page-overview">
+      <div class="page-hd">
+        <div><div class="page-title">Resumen del día</div><div class="page-sub">Actualización en tiempo real</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="suc-sel-global" onchange="changeSuc()" style="width:180px;margin:0;padding:7px 10px;font-size:12px;"></select>
+          <button class="btn-o" onclick="loadOverview()">↻</button>
+        </div>
+      </div>
+      <div class="kpi-row" id="kpi-row"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="card"><div class="card-title">En atención ahora</div><div id="active-table"></div></div>
+        <div class="card"><div class="card-title">En espera</div><div id="waiting-table"></div></div>
+      </div>
+    </div>
+
+    <!-- TURNOS -->
+    <div class="page" id="page-turnos">
+      <div class="page-hd"><div><div class="page-title">Registro de turnos</div><div class="page-sub">Historial del día</div></div></div>
+      <div class="card">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+          <select id="t-fil-estado" style="width:140px;margin:0;padding:7px 10px;font-size:12px;" onchange="loadTurnos()">
+            <option value="">Todos los estados</option>
+            <option value="esperando">Esperando</option>
+            <option value="llamado">Llamado</option>
+            <option value="atendido">Atendido</option>
+            <option value="ausente">Ausente</option>
+            <option value="derivado">Derivado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+          <input id="t-fil-fecha" type="date" style="width:150px;margin:0;padding:7px 10px;font-size:12px;" onchange="loadTurnos()">
+          <button class="btn-o" onclick="loadTurnos()">↻ Actualizar</button>
+        </div>
+        <div id="turnos-tbody"></div>
+      </div>
+    </div>
+
+    <!-- REPORTES -->
+    <div class="page" id="page-reportes">
+      <div class="page-hd"><div><div class="page-title">Reportes históricos</div><div class="page-sub">Análisis de rendimiento</div></div></div>
+      <div class="dates-row">
+        <div><label>Desde</label><input type="date" id="rep-desde"></div>
+        <div><label>Hasta</label><input type="date" id="rep-hasta"></div>
+        <button class="btn-p" onclick="loadReportes()">Generar reporte</button>
+        <button class="btn-o" id="btn-xl" style="display:none" onclick="downloadExcel()">⬇ Excel</button>
+        <button class="btn-o" id="btn-pdf" style="display:none" onclick="downloadPDF()">⬇ PDF</button>
+      </div>
+      <div class="alert" id="rep-alert"></div>
+      <div id="rep-content"></div>
+    </div>
+
+    <!-- ÁREAS -->
+    <div class="page" id="page-areas">
+      <div class="page-hd">
+        <div><div class="page-title">Áreas</div></div>
+        <button class="btn-p" onclick="openModal('modal-area')">+ Nueva área</button>
+      </div>
+      <div class="alert" id="areas-alert"></div>
+      <div id="areas-content"></div>
+    </div>
+
+    <!-- VENTANILLAS -->
+    <div class="page" id="page-ventanillas">
+      <div class="page-hd">
+        <div><div class="page-title">Ventanillas</div></div>
+        <button class="btn-p" onclick="openModal('modal-vent')">+ Nueva ventanilla</button>
+      </div>
+      <div class="alert" id="vents-alert"></div>
+      <div id="vents-content"></div>
+    </div>
+
+    <!-- USUARIOS -->
+    <div class="page" id="page-usuarios">
+      <div class="page-hd">
+        <div><div class="page-title">Usuarios</div></div>
+        <button class="btn-p" onclick="openModal('modal-user')">+ Nuevo usuario</button>
+      </div>
+      <div class="alert" id="users-alert"></div>
+      <div id="users-content"></div>
+    </div>
+
+    <!-- CITAS PREVIAS -->
+    <div class="page" id="page-citas">
+      <div class="page-hd">
+        <div><div class="page-title">Citas previas</div><div class="page-sub">Reservas online del día</div></div>
+        <button class="btn-o" onclick="loadCitas()">↻ Actualizar</button>
+      </div>
+      <div id="citas-content"></div>
+    </div>
+
+    <!-- NOTIFICACIONES LOG -->
+    <div class="page" id="page-notif-log">
+      <div class="page-hd">
+        <div><div class="page-title">Log de notificaciones</div><div class="page-sub">Últimas 200 · SMS y WhatsApp</div></div>
+      </div>
+      <div id="notif-log-content"></div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="page" id="page-config">
+      <div class="page-hd"><div><div class="page-title">Configuración</div></div></div>
+      <div class="alert" id="cfg-alert"></div>
+      <div id="config-content"></div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal área -->
+<div class="modal-bg" id="modal-area">
+  <div class="modal">
+    <div class="modal-title" id="area-modal-title">Nueva área</div>
+    <input type="hidden" id="area-id">
+    <div><div class="lbl">Sucursal</div><select id="area-suc"></select></div>
+    <div class="frow">
+      <div><div class="lbl">Nombre</div><input id="area-nombre" placeholder="Ej: Caja"></div>
+      <div><div class="lbl">Prefijo (2 letras)</div><input id="area-prefijo" maxlength="2" placeholder="C" style="text-transform:uppercase"></div>
+    </div>
+    <div class="frow">
+      <div><div class="lbl">Color</div><input id="area-color" type="color" value="#4A8FD4" style="height:38px;padding:4px;cursor:pointer;"></div>
+      <div><div class="lbl">Orden</div><input id="area-orden" type="number" value="0" min="0"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-o" onclick="closeModal('modal-area')">Cancelar</button>
+      <button class="btn-p" onclick="saveArea()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ventanilla -->
+<div class="modal-bg" id="modal-vent">
+  <div class="modal">
+    <div class="modal-title">Nueva ventanilla</div>
+    <input type="hidden" id="vent-id">
+    <div><div class="lbl">Sucursal</div><select id="vent-suc" onchange="loadAreasForVent()"></select></div>
+    <div><div class="lbl">Área</div><select id="vent-area"></select></div>
+    <div><div class="lbl">Nombre</div><input id="vent-nombre" placeholder="Ej: Ventanilla 3"></div>
+    <div class="modal-footer">
+      <button class="btn-o" onclick="closeModal('modal-vent')">Cancelar</button>
+      <button class="btn-p" onclick="saveVent()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal usuario -->
+<div class="modal-bg" id="modal-user">
+  <div class="modal">
+    <div class="modal-title" id="user-modal-title">Nuevo usuario</div>
+    <input type="hidden" id="usr-id">
+    <div class="frow">
+      <div><div class="lbl">Nombre completo</div><input id="usr-nombre"></div>
+      <div><div class="lbl">Username</div><input id="usr-username"></div>
+    </div>
+    <div class="frow">
+      <div><div class="lbl">Contraseña</div><input id="usr-pass" type="password" placeholder="Dejar vacío = sin cambio"></div>
+      <div><div class="lbl">Email</div><input id="usr-email" type="email"></div>
+    </div>
+    <div class="frow">
+      <div><div class="lbl">Rol</div>
+        <select id="usr-rol">
+          <option value="admin">Administrador</option>
+          <option value="supervisor">Supervisor</option>
+          <option value="operador" selected>Operador</option>
+          <option value="totem">Tótem</option>
+          <option value="pantalla">Pantalla</option>
+        </select>
+      </div>
+      <div><div class="lbl">Sucursal</div><select id="usr-suc"></select></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-o" onclick="closeModal('modal-user')">Cancelar</button>
+      <button class="btn-p" onclick="saveUser()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="ws-dot"></div>
+<script src="/shared/turnero-client.js"></script>
+<script>
+  const user = requireLogin(['admin','supervisor']);
+  if (!user) throw '';
+  liveClock(document.getElementById('reloj'));
+  document.getElementById('h-title').textContent = user.org_nombre || 'Admin';
+  document.getElementById('h-org').textContent   = user.org_slug ? `· ${user.org_slug}` : '';
+
+  const orgId = user.org_id;
+  let sucursales = user.sucursales || [];
+  let currentSucId = user.suc_id || sucursales[0]?.id;
+  let allAreas = [], allVents = [], allUsers = [];
+  const today = new Date().toISOString().slice(0,10);
+
+  document.getElementById('rep-desde').value = today;
+  document.getElementById('rep-hasta').value = today;
+  document.getElementById('t-fil-fecha').value = today;
+
+  // ── Nav ──────────────────────────────────────────────────────
+  document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+      document.getElementById('page-'+item.dataset.page).classList.add('active');
+      item.classList.add('active');
+      const loaders={overview:loadOverview,turnos:loadTurnos,reportes:()=>{},areas:loadAreas,ventanillas:loadVents,usuarios:loadUsers,config:loadConfig,citas:loadCitas,'notif-log':loadNotifLog};
+      loaders[item.dataset.page]?.();
+    });
+  });
+
+  // ── Sucursal selector ────────────────────────────────────────
+  async function initSucursales() {
+    if (!sucursales.length) {
+      const data = await apiGet(`/orgs/${orgId}/sucursales`);
+      sucursales = data;
+    }
+    const ss = document.getElementById('suc-sel-global');
+    ss.innerHTML = sucursales.map(s=>`<option value="${s.id}">${s.nombre}</option>`).join('');
+    if (currentSucId) ss.value = currentSucId;
+    else currentSucId = parseInt(ss.value);
+    // Llenar selectores de modals
+    ['area-suc','vent-suc','usr-suc'].forEach(id=>{
+      const el = document.getElementById(id);
+      if (!el) return;
+      const nullable = id==='usr-suc';
+      el.innerHTML = (nullable?'<option value="">Todas</option>':'')+sucursales.map(s=>`<option value="${s.id}">${s.nombre}</option>`).join('');
+    });
+    loadOverview();
+  }
+
+  function changeSuc() {
+    currentSucId = parseInt(document.getElementById('suc-sel-global').value);
+    loadOverview();
+  }
+
+  // ── Overview ──────────────────────────────────────────────────
+  async function loadOverview() {
+    if (!currentSucId) return;
+    try {
+      const data = await apiGet(`/turnos/estado?suc_id=${currentSucId}`);
+      const s = data.stats || {};
+      document.getElementById('kpi-row').innerHTML = [
+        {v:s.total||0,    l:'Turnos totales'},
+        {v:s.esperando||0,l:'En espera'},
+        {v:s.activos||0,  l:'En atención'},
+        {v:s.atendido||0, l:'Atendidos'},
+        {v:s.ausente||0,  l:'Ausentes'},
+        {v:s.derivado||0, l:'Derivados'},
+      ].map(x=>`<div class="kpi"><div class="kpi-v">${x.v}</div><div class="kpi-l">${x.l}</div></div>`).join('');
+
+      const activos  = data.activos  || [];
+      const espera   = data.esperando|| [];
+      const ESTADO_B = {llamado:'b-a',atendiendo:'b-a',esperando:'b-m',atendido:'b-g',ausente:'b-r',derivado:'b-p',cancelado:'b-r'};
+
+      document.getElementById('active-table').innerHTML = activos.length
+        ? `<table><thead><tr><th>Turno</th><th>Área</th><th>Ventanilla</th></tr></thead><tbody>
+           ${activos.map(t=>`<tr><td class="mini" style="color:${t.area_color}">${t.numero}</td><td>${t.area_nombre}</td><td>${t.ventanilla_nombre||'—'}</td></tr>`).join('')}
+           </tbody></table>` : `<div style="font-size:11px;color:var(--m);padding:12px">Sin turnos activos</div>`;
+
+      document.getElementById('waiting-table').innerHTML = espera.length
+        ? `<table><thead><tr><th>Turno</th><th>Área</th><th>Desde</th></tr></thead><tbody>
+           ${espera.slice(0,10).map(t=>`<tr><td class="mini" style="color:${t.area_color}">${t.numero}</td><td>${t.area_nombre}</td><td class="mini">${formatTime(t.hora_emision)}</td></tr>`).join('')}
+           ${espera.length>10?`<tr><td colspan="3" style="font-size:10px;color:var(--m)">+${espera.length-10} más...</td></tr>`:''}
+           </tbody></table>` : `<div style="font-size:11px;color:var(--m);padding:12px">Sin turnos en espera</div>`;
+    } catch(e) {}
+  }
+
+  // ── Turnos list ───────────────────────────────────────────────
+  async function loadTurnos() {
+    if (!currentSucId) return;
+    const estado = document.getElementById('t-fil-estado').value;
+    const fecha  = document.getElementById('t-fil-fecha').value;
+    try {
+      const rows = await apiGet(`/turnos?suc_id=${currentSucId}&limit=200${estado?'&estado='+estado:''}${fecha?'&fecha='+fecha:''}`);
+      const ESTADO_B = {llamado:'b-a',atendiendo:'b-a',esperando:'b-m',atendido:'b-g',ausente:'b-r',derivado:'b-p',cancelado:'b-r'};
+      document.getElementById('turnos-tbody').innerHTML = rows.length
+        ? `<table><thead><tr><th>Turno</th><th>Área</th><th>Emitido</th><th>Operador</th><th>Estado</th><th>Espera</th><th></th></tr></thead><tbody>
+           ${rows.map(t=>`<tr>
+             <td class="mini" style="color:${t.area_color};font-size:16px">${t.numero}</td>
+             <td>${t.area_nombre}</td>
+             <td class="mini">${formatTime(t.hora_emision)}</td>
+             <td style="font-size:11px;color:var(--m)">${t.operador_nombre||'—'}</td>
+             <td><span class="badge ${ESTADO_B[t.estado]||'b-m'}">${t.estado}</span>${t.derivado_de_num?`<span class="badge b-p" style="margin-left:4px">↗ Der.</span>`:''}</td>
+             <td class="mini">${formatSecs(t.tiempo_espera_s)}</td>
+             <td>${!['atendido','ausente','cancelado','derivado'].includes(t.estado)?`<button class="btn-r" onclick="cancelTurno(${t.id})">Cancelar</button>`:''}</td>
+           </tr>`).join('')}
+           </tbody></table>` : `<div style="padding:24px;text-align:center;font-size:12px;color:var(--m)">Sin turnos para este filtro</div>`;
+    } catch(e) {}
+  }
+
+  async function cancelTurno(id) {
+    if (!confirm('¿Cancelar este turno?')) return;
+    try { await apiPut(`/turnos/${id}/estado`,{estado:'cancelado'}); loadTurnos(); loadOverview(); } catch(e) {}
+  }
+
+  // ── Reportes ──────────────────────────────────────────────────
+  async function loadReportes() {
+    const desde = document.getElementById('rep-desde').value;
+    const hasta = document.getElementById('rep-hasta').value;
+    if (!currentSucId) return;
+    try {
+      const r = await apiGet(`/turnos/reportes?suc_id=${currentSucId}&desde=${desde}&hasta=${hasta}`);
+      document.getElementById('btn-xl').style.display='inline-flex';
+      document.getElementById('btn-pdf').style.display='inline-flex';
+      const t = r.totales || {};
+      document.getElementById('rep-content').innerHTML = `
+        <div class="kpi-row">
+          ${[{v:t.total||0,l:'Total'},{v:t.atendidos||0,l:'Atendidos'},{v:t.ausentes||0,l:'Ausentes'},
+             {v:t.derivados||0,l:'Derivados'},{v:formatSecs(t.espera_prom_s),l:'Espera prom.'},{v:(t.eficiencia||0)+'%',l:'Eficiencia'}]
+            .map(x=>`<div class="kpi"><div class="kpi-v">${x.v}</div><div class="kpi-l">${x.l}</div></div>`).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="card"><div class="card-title">Por área</div>
+            <table><thead><tr><th>Área</th><th style="text-align:right">Total</th><th style="text-align:right">Atendidos</th><th style="text-align:right">Espera prom.</th></tr></thead>
+            <tbody>${(r.por_area||[]).map(a=>`<tr>
+              <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${a.color};margin-right:6px;vertical-align:middle"></span>${a.nombre}</td>
+              <td style="text-align:right" class="mini">${a.total}</td>
+              <td style="text-align:right" class="mini">${a.atendidos}</td>
+              <td style="text-align:right" class="mini">${formatSecs(a.espera_prom_s)}</td>
+            </tr>`).join('')}</tbody></table>
+          </div>
+          <div class="card"><div class="card-title">Por día</div>
+            <table><thead><tr><th>Fecha</th><th style="text-align:right">Total</th><th style="text-align:right">Atendidos</th></tr></thead>
+            <tbody>${(r.por_dia||[]).map(d=>`<tr>
+              <td class="mini">${formatDate(d.fecha)}</td>
+              <td style="text-align:right" class="mini">${d.total}</td>
+              <td style="text-align:right" class="mini">${d.atendidos}</td>
+            </tr>`).join('')}</tbody></table>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">Por ventanilla / operador</div>
+          <table><thead><tr><th>Ventanilla</th><th>Área</th><th>Operador</th><th style="text-align:right">Total</th><th style="text-align:right">Atendidos</th><th style="text-align:right">Atención prom.</th></tr></thead>
+          <tbody>${(r.por_ventanilla||[]).map(v=>`<tr>
+            <td>${v.ventanilla}</td><td>${v.area}</td><td style="color:var(--m);font-size:11px">${v.operador||'—'}</td>
+            <td style="text-align:right" class="mini">${v.total}</td>
+            <td style="text-align:right" class="mini">${v.atendidos}</td>
+            <td style="text-align:right" class="mini">${formatSecs(v.atencion_prom_s)}</td>
+          </tr>`).join('')}</tbody></table>
+        </div>`;
+    } catch(e) { document.getElementById('rep-content').innerHTML = `<div style="color:var(--r);font-size:12px">${e.message}</div>`; }
+  }
+
+  // ── Áreas ─────────────────────────────────────────────────────
+  async function loadAreas() {
+    if (!currentSucId) return;
+    try {
+      const data = await apiGet(`/orgs/areas/list?suc_id=${currentSucId}`);
+      allAreas = data;
+      document.getElementById('areas-content').innerHTML = `<div class="card">
+        <table><thead><tr><th>Prefijo</th><th>Nombre</th><th>Ventanillas</th><th>Estado</th><th></th></tr></thead>
+        <tbody>${data.map(a=>`<tr>
+          <td><span style="display:inline-block;padding:3px 9px;background:${a.color}22;border:1px solid ${a.color}44;color:${a.color};font-family:'IBM Plex Mono',monospace;font-weight:700">${a.prefijo}</span></td>
+          <td style="font-weight:600">${a.nombre}</td>
+          <td class="mini">${a.num_ventanillas||0}</td>
+          <td><span class="badge ${a.activo?'b-g':'b-r'}">${a.activo?'Activa':'Inactiva'}</span></td>
+          <td><button class="btn-o" onclick="editArea(${a.id})" style="font-size:10px;padding:5px 10px">Editar</button></td>
+        </tr>`).join('')}</tbody></table></div>`;
+    } catch(e) {}
+  }
+
+  function editArea(id) {
+    const a = allAreas.find(x=>x.id===id);
+    if (!a) return;
+    document.getElementById('area-modal-title').textContent = 'Editar área';
+    document.getElementById('area-id').value = id;
+    document.getElementById('area-suc').value    = a.sucursal_id;
+    document.getElementById('area-nombre').value = a.nombre;
+    document.getElementById('area-prefijo').value= a.prefijo;
+    document.getElementById('area-color').value  = a.color;
+    document.getElementById('area-orden').value  = a.orden;
+    openModal('modal-area');
+  }
+
+  async function saveArea() {
+    const id    = document.getElementById('area-id').value;
+    const body  = {
+      suc_id:  parseInt(document.getElementById('area-suc').value),
+      nombre:  document.getElementById('area-nombre').value.trim(),
+      prefijo: document.getElementById('area-prefijo').value.trim().toUpperCase(),
+      color:   document.getElementById('area-color').value,
+      orden:   parseInt(document.getElementById('area-orden').value),
+    };
+    try {
+      if (id) { await apiPut(`/orgs/areas/${id}`, body); }
+      else    { await apiPost('/orgs/areas', body); }
+      closeModal('modal-area');
+      document.getElementById('area-id').value = '';
+      document.getElementById('area-modal-title').textContent = 'Nueva área';
+      loadAreas();
+      showAlert('areas-alert', 'Área guardada','ok');
+    } catch(e) { showAlert('areas-alert', e.message,'err'); }
+  }
+
+  // ── Ventanillas ───────────────────────────────────────────────
+  async function loadVents() {
+    if (!currentSucId) return;
+    try {
+      const data = await apiGet(`/orgs/areas/list?suc_id=${currentSucId}`);
+      allVents = data.flatMap(a=>(a.ventanillas||[]).map(v=>({...v,area_nombre:a.nombre,area_color:a.color})));
+      document.getElementById('vents-content').innerHTML = `<div class="card">
+        <table><thead><tr><th>Nombre</th><th>Área</th><th>Estado</th><th></th></tr></thead>
+        <tbody>${allVents.map(v=>`<tr>
+          <td style="font-weight:600">${v.nombre}</td>
+          <td style="font-size:12px;color:${v.area_color}">${v.area_nombre}</td>
+          <td><span class="badge ${v.activo?'b-g':'b-r'}">${v.activo?'Activa':'Inactiva'}</span></td>
+          <td><button class="btn-o" onclick="toggleVent(${v.id},${v.activo?0:1})" style="font-size:10px;padding:5px 10px">${v.activo?'Desactivar':'Activar'}</button></td>
+        </tr>`).join('')}</tbody></table></div>`;
+    } catch(e) {}
+  }
+
+  async function loadAreasForVent() {
+    const sucId = parseInt(document.getElementById('vent-suc').value);
+    if (!sucId) return;
+    const data = await apiGet(`/orgs/areas/list?suc_id=${sucId}`);
+    const sel  = document.getElementById('vent-area');
+    sel.innerHTML = data.filter(a=>a.activo).map(a=>`<option value="${a.id}">${a.nombre}</option>`).join('');
+  }
+
+  async function saveVent() {
+    const body = {
+      suc_id:  parseInt(document.getElementById('vent-suc').value),
+      area_id: parseInt(document.getElementById('vent-area').value),
+      nombre:  document.getElementById('vent-nombre').value.trim(),
+    };
+    if (!body.nombre) return;
+    try { await apiPost('/orgs/ventanillas', body); closeModal('modal-vent'); loadVents(); } catch(e) { alert(e.message); }
+  }
+
+  async function toggleVent(id, activo) {
+    try { await apiPut(`/orgs/ventanillas/${id}`, { activo }); loadVents(); } catch(e) {}
+  }
+
+  // ── Usuarios ──────────────────────────────────────────────────
+  async function loadUsers() {
+    try {
+      const data = await apiGet(`/orgs/${orgId}/usuarios`);
+      allUsers = data;
+      const ROLES = {admin:'b-a',supervisor:'b-a',operador:'b-m',totem:'b-m',pantalla:'b-m'};
+      document.getElementById('users-content').innerHTML = `<div class="card">
+        <table><thead><tr><th>Nombre</th><th>Username</th><th>Rol</th><th>Sucursal</th><th>Último acceso</th><th>Estado</th><th></th></tr></thead>
+        <tbody>${data.map(u=>`<tr>
+          <td style="font-weight:600">${u.nombre}</td>
+          <td class="mini">${u.username}</td>
+          <td><span class="badge ${ROLES[u.rol]||'b-m'}">${u.rol}</span></td>
+          <td style="font-size:11px;color:var(--m)">${u.sucursal_nombre||'Todas'}</td>
+          <td class="mini">${u.ultimo_acceso?formatDate(u.ultimo_acceso):'—'}</td>
+          <td><span class="badge ${u.activo?'b-g':'b-r'}">${u.activo?'Activo':'Inactivo'}</span></td>
+          <td><button class="btn-o" onclick="editUser(${u.id})" style="font-size:10px;padding:5px 10px">Editar</button></td>
+        </tr>`).join('')}</tbody></table></div>`;
+    } catch(e) {}
+  }
+
+  function editUser(id) {
+    const u = allUsers.find(x=>x.id===id);
+    if (!u) return;
+    document.getElementById('user-modal-title').textContent = 'Editar usuario';
+    document.getElementById('usr-id').value       = id;
+    document.getElementById('usr-nombre').value   = u.nombre;
+    document.getElementById('usr-username').value = u.username;
+    document.getElementById('usr-email').value    = u.email||'';
+    document.getElementById('usr-rol').value      = u.rol;
+    document.getElementById('usr-suc').value      = u.sucursal_id||'';
+    openModal('modal-user');
+  }
+
+  async function saveUser() {
+    const id   = document.getElementById('usr-id').value;
+    const body = {
+      nombre:      document.getElementById('usr-nombre').value.trim(),
+      username:    document.getElementById('usr-username').value.trim(),
+      email:       document.getElementById('usr-email').value.trim()||null,
+      rol:         document.getElementById('usr-rol').value,
+      sucursal_id: parseInt(document.getElementById('usr-suc').value)||null,
+    };
+    const pass = document.getElementById('usr-pass').value;
+    if (pass) body.password = pass;
+    if (!id && !pass) return alert('La contraseña es requerida para nuevos usuarios');
+    try {
+      if (id) { await apiPut(`/orgs/usuarios/${id}`, body); }
+      else    { await apiPost(`/orgs/${orgId}/usuarios`, body); }
+      closeModal('modal-user');
+      document.getElementById('usr-id').value = '';
+      document.getElementById('user-modal-title').textContent = 'Nuevo usuario';
+      loadUsers();
+    } catch(e) { alert(e.message); }
+  }
+
+  // ── Config ────────────────────────────────────────────────────
+  async function loadConfig() {
+    try {
+      const data = await apiGet(`/orgs/${orgId}/config`);
+      const cfg  = data.config || {};
+      document.getElementById('config-content').innerHTML = `
+        <div class="card">
+          <div class="card-title">Configuración general</div>
+          <div class="frow">
+            <div><div class="lbl">Nombre de la organización</div><input id="cfg-nombre" value="${data.nombre||''}"></div>
+            <div><div class="lbl">Slogan</div><input id="cfg-slogan" value="${cfg.slogan||''}"></div>
+          </div>
+          <div class="frow">
+            <div><div class="lbl">Ancho ticket</div>
+              <select id="cfg-ticket-width">
+                <option value="58mm" ${cfg.ticket_width==='58mm'?'selected':''}>58mm</option>
+                <option value="80mm" ${cfg.ticket_width==='80mm'?'selected':''}>80mm</option>
+                <option value="112mm" ${cfg.ticket_width==='112mm'?'selected':''}>112mm</option>
+              </select>
+            </div>
+            <div><div class="lbl">Impresión automática</div>
+              <select id="cfg-auto-print">
+                <option value="1" ${cfg.auto_print==='1'?'selected':''}>Sí</option>
+                <option value="0" ${cfg.auto_print!=='1'?'selected':''}>No</option>
+              </select>
+            </div>
+          </div>
+          <div><div class="lbl">Texto pie de ticket</div><input id="cfg-footer" value="${cfg.footer_ticket||''}"></div>
+          <div><div class="lbl">URL del logo</div><input id="cfg-logo" value="${data.logo_url||''}"></div>
+          <div style="margin-top:4px"><button class="btn-p" onclick="saveConfig()">Guardar configuración</button></div>
+        </div>`;
+    } catch(e) {}
+  }
+
+  async function saveConfig() {
+    try {
+      await apiPut(`/orgs/${orgId}/config`, {
+        nombre:   document.getElementById('cfg-nombre').value.trim(),
+        logo_url: document.getElementById('cfg-logo').value.trim()||null,
+        config: {
+          slogan:        document.getElementById('cfg-slogan').value.trim(),
+          ticket_width:  document.getElementById('cfg-ticket-width').value,
+          auto_print:    document.getElementById('cfg-auto-print').value,
+          footer_ticket: document.getElementById('cfg-footer').value.trim(),
+        }
+      });
+      showAlert('cfg-alert','Configuración guardada','ok');
+    } catch(e) { showAlert('cfg-alert',e.message,'err'); }
+  }
+
+  // ── Citas ─────────────────────────────────────────────────────
+  async function loadCitas() {
+    if (!currentSucId) return;
+    const today = new Date().toISOString().slice(0,10);
+    try {
+      const citas = await apiGet(`/citas?suc_id=${currentSucId}&fecha=${today}`);
+      const ESTADO = {pendiente:'b-m',confirmada:'b-g',en_sala:'b-a',atendida:'b-g',cancelada:'b-r',no_asistio:'b-r'};
+      document.getElementById('citas-content').innerHTML = citas.length
+        ? `<div class="card"><table><thead><tr><th>#</th><th>Cliente</th><th>Área</th><th>Horario</th><th>Teléfono</th><th>Estado</th><th></th></tr></thead>
+           <tbody>${citas.map(c=>`<tr>
+             <td class="mini">CT${String(c.id).padStart(4,'0')}</td>
+             <td style="font-weight:600">${c.cliente_nombre}</td>
+             <td style="color:${c.area_color};font-size:12px">${c.area_nombre}</td>
+             <td class="mini">${c.hora_inicio.slice(0,5)}</td>
+             <td class="mini">${c.cliente_tel||'—'}</td>
+             <td><span class="badge ${ESTADO[c.estado]||'b-m'}">${c.estado}</span></td>
+             <td>${['pendiente','confirmada'].includes(c.estado)?
+               `<button class="btn-o" style="font-size:10px;padding:5px 10px" onclick="citaATurno(${c.id})">→ Turno</button>
+                <button class="btn-r" style="margin-left:4px" onclick="cancelarCita(${c.id})">Cancelar</button>`:''}</td>
+           </tr>`).join('')}</tbody></table></div>`
+        : `<div class="card" style="text-align:center;padding:32px;color:var(--m);font-size:12px">No hay citas para hoy</div>`;
+    } catch(e) {}
+  }
+
+  async function citaATurno(id) {
+    try {
+      const turno = await apiPost(`/citas/${id}/a-turno`);
+      flash(`Turno emitido: ${turno.numero}`, 'ok');
+      loadCitas(); loadOverview();
+    } catch(e) { flash(e.message,'err'); }
+  }
+
+  async function cancelarCita(id) {
+    if (!confirm('¿Cancelar esta cita?')) return;
+    try { await apiDelete(`/citas/${id}`); loadCitas(); } catch(e) {}
+  }
+
+  // ── Notif log ──────────────────────────────────────────────
+  async function loadNotifLog() {
+    try {
+      const rows = await apiGet('/citas/notif-log');
+      const EST = {enviado:'b-g',error:'b-r',simulado:'b-m'};
+      document.getElementById('notif-log-content').innerHTML = rows.length
+        ? `<div class="card"><table><thead><tr><th>Tipo</th><th>Canal</th><th>Destinatario</th><th>Estado</th><th>Hora</th><th>SID</th></tr></thead>
+           <tbody>${rows.map(r=>`<tr>
+             <td style="font-size:11px">${r.tipo}</td>
+             <td><span class="badge b-m">${r.canal}</span></td>
+             <td class="mini">${r.destinatario}</td>
+             <td><span class="badge ${EST[r.estado]||'b-m'}">${r.estado}</span></td>
+             <td class="mini">${new Date(r.creado_en).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}</td>
+             <td class="mini" style="font-size:9px;color:var(--m)">${r.sid||'—'}</td>
+           </tr>`).join('')}</tbody></table></div>`
+        : `<div class="card" style="text-align:center;padding:32px;color:var(--m);font-size:12px">Sin notificaciones registradas</div>`;
+    } catch(e) {}
+  }
+
+  // ── Excel/PDF download ─────────────────────────────────────
+  async function downloadExcel() {
+    const desde = document.getElementById('rep-desde').value;
+    const hasta = document.getElementById('rep-hasta').value;
+    try {
+      await apiDownload(`/turnos/reportes/excel?suc_id=${currentSucId}&desde=${desde}&hasta=${hasta}`,
+        `reporte-turnos-${desde}.xlsx`);
+    } catch(e) { alert(e.message); }
+  }
+
+  async function downloadPDF() {
+    const desde = document.getElementById('rep-desde').value;
+    const hasta = document.getElementById('rep-hasta').value;
+    try {
+      await apiDownload(`/turnos/reportes/pdf?suc_id=${currentSucId}&desde=${desde}&hasta=${hasta}`,
+        `reporte-turnos-${desde}.pdf`);
+    } catch(e) { alert(e.message); }
+  }
+
+  // ── Utils ─────────────────────────────────────────────────────
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+  function showAlert(id, msg, t) {
+    const el=document.getElementById(id); el.textContent=msg; el.className=`alert alert-${t}`; el.style.display='block';
+    if(t==='ok') setTimeout(()=>el.style.display='none',4000);
+  }
+
+  // ── WS ────────────────────────────────────────────────────────
+  new TurneroWS({
+    view: 'admin', orgId, sucId: currentSucId,
+    handlers: {
+      onOpen:  ()=>document.getElementById('ws-dot').classList.add('ok'),
+      onClose: ()=>document.getElementById('ws-dot').classList.remove('ok'),
+      turno_emitido:     ()=>loadOverview(),
+      turno_llamado:     ()=>loadOverview(),
+      turno_actualizado: ()=>loadOverview(),
+    }
+  });
+
+  initSucursales();
+</script>
+</body>
+</html>
