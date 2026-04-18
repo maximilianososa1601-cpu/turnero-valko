@@ -2,7 +2,7 @@ services:
   # El Cerebro (Backend)
   - type: web
     name: backend-valko
-    env: node
+    runtime: node
     plan: free
     region: ohio
     buildCommand: cd backend && npm install
@@ -15,13 +15,9 @@ services:
   # La Pantalla (Frontend)
   - type: web
     name: frontend-valko
-    env: static
-    plan: free
+    runtime: static
     publishDir: ./frontend
-    envVars:
-      - key: REACT_APP_API_URL
-        fromServiceAccount: backend-valko
-        fromServiceField: url
+    # No necesita buildCommand si son solo archivos HTML/JS
 
 envVarGroups:
   - name: valko-secretos
