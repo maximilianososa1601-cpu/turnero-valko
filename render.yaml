@@ -1,16 +1,32 @@
 services:
+  # El Cerebro (Backend)
   - type: web
-    name: turnero
+    name: backend-valko
     runtime: node
-    rootDir: backend
-    buildCommand: npm install
-    startCommand: node server.js
-    healthCheckPath: /ping
+    plan: free
+    region: ohio
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node src/index.js
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 3000
+      - fromGroup: valko-secretos
+
+  # La Pantalla (Frontend)
+  - type: web
+    name: frontend-valko
+    runtime: static
+    plan: free
+    region: ohio
+    publishDir: ./frontend
+    envVars:
+      - key: REACT_APP_API_URL
+        fromServiceAccount: backend-valko
+        fromServiceField: url
+
+envVarGroups:
+  - name: valko-secretos
+    envVars:
       - key: DB_HOST
         sync: false
       - key: DB_PORT
@@ -18,6 +34,14 @@ services:
       - key: DB_USER
         sync: false
       - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_SSL
+        value: "true"
+      - key: DB_SSL_CA_CONTENT
+        sync: false
+      - key: JWT_SECRET
         sync: false
       - key: DB_NAME
         sync: false
