@@ -6,7 +6,7 @@ services:
     plan: free
     region: ohio
     buildCommand: cd backend && npm install
-    startCommand: cd backend && node src/index.js
+    startCommand: cd backend && node server.js
     envVars:
       - key: NODE_ENV
         value: production
@@ -17,7 +17,6 @@ services:
     name: frontend-valko
     runtime: static
     publishDir: ./frontend
-    # No necesita buildCommand si son solo archivos HTML/JS
 
 envVarGroups:
   - name: valko-secretos
