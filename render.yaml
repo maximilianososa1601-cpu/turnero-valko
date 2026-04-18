@@ -13,11 +13,9 @@ services:
       - fromGroup: valko-secretos
 
   # La Pantalla (Frontend)
-  - type: web
+  - type: static
     name: frontend-valko
-    runtime: static
     plan: free
-    region: ohio
     publishDir: ./frontend
     envVars:
       - key: REACT_APP_API_URL
@@ -43,9 +41,6 @@ envVarGroups:
         sync: false
       - key: JWT_SECRET
         sync: false
-      - key: DB_NAME
-        sync: false
-      - key: DB_SSL
         value: "true"
       - key: DB_SSL_CA_CONTENT
         sync: false
