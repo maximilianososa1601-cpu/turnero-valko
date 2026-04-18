@@ -5,8 +5,8 @@ services:
     runtime: node
     plan: free
     region: ohio
-    buildCommand: cd backend && npm install
-    startCommand: cd backend && node server.js
+    buildCommand: npm install
+    startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
@@ -16,7 +16,7 @@ services:
   - type: web
     name: frontend-valko
     runtime: static
-    publishDir: ./frontend
+    publishDir: .  # El punto significa "acá mismo", donde están los archivos
 
 envVarGroups:
   - name: valko-secretos
