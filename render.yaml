@@ -2,7 +2,7 @@ services:
   # El Cerebro (Backend)
   - type: web
     name: backend-valko
-    runtime: node
+    env: node
     plan: free
     region: ohio
     buildCommand: cd backend && npm install
@@ -13,8 +13,9 @@ services:
       - fromGroup: valko-secretos
 
   # La Pantalla (Frontend)
-  - type: static
+  - type: web
     name: frontend-valko
+    env: static
     plan: free
     publishDir: ./frontend
     envVars:
@@ -40,11 +41,4 @@ envVarGroups:
       - key: DB_SSL_CA_CONTENT
         sync: false
       - key: JWT_SECRET
-        sync: false
-        value: "true"
-      - key: DB_SSL_CA_CONTENT
-        sync: false
-      - key: JWT_SECRET
-        generateValue: true
-      - key: BASE_URL
         sync: false
